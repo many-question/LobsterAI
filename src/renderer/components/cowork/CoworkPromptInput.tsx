@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { PaperAirplaneIcon, StopIcon, FolderIcon } from '@heroicons/react/24/solid';
-import { PaperClipIcon, XMarkIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, PhotoIcon } from '@heroicons/react/24/outline';
+import PaperClipIcon from '../icons/PaperClipIcon';
 import ModelSelector from '../ModelSelector';
 import FolderSelectorPopover from './FolderSelectorPopover';
 import { SkillsButton, ActiveSkillBadge } from '../skills';
@@ -193,7 +194,10 @@ const CoworkPromptInput = React.forwardRef<CoworkPromptInputRef, CoworkPromptInp
 
   useEffect(() => {
     if (value !== draftPrompt) {
-      dispatch(setDraftPrompt(value));
+      const timer = setTimeout(() => {
+        dispatch(setDraftPrompt(value));
+      }, 300);
+      return () => clearTimeout(timer);
     }
   }, [value, draftPrompt, dispatch]);
 

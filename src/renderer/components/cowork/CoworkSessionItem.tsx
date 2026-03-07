@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { CoworkSessionSummary, CoworkSessionStatus } from '../../types/cowork';
-import { EllipsisHorizontalIcon, ExclamationTriangleIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import EllipsisHorizontalIcon from '../icons/EllipsisHorizontalIcon';
+import PencilSquareIcon from '../icons/PencilSquareIcon';
+import TrashIcon from '../icons/TrashIcon';
 import { i18nService } from '../../services/i18n';
 
 interface CoworkSessionItemProps {
@@ -28,7 +31,7 @@ const PushPinIcon: React.FC<React.SVGProps<SVGSVGElement> & { slashed?: boolean 
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth={1.5}
+    strokeWidth={2}
     strokeLinecap="round"
     strokeLinejoin="round"
     {...props}

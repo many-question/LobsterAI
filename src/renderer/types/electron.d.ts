@@ -276,6 +276,7 @@ interface IElectronAPI {
       getStatus: () => Promise<{ success: boolean; status?: OpenClawEngineStatus; error?: string }>;
       install: () => Promise<{ success: boolean; status?: OpenClawEngineStatus; error?: string }>;
       retryInstall: () => Promise<{ success: boolean; status?: OpenClawEngineStatus; error?: string }>;
+      restartGateway: () => Promise<{ success: boolean; status?: OpenClawEngineStatus; error?: string }>;
       onProgress: (callback: (status: OpenClawEngineStatus) => void) => () => void;
     };
   };
@@ -377,7 +378,8 @@ interface IElectronAPI {
   };
   im: {
     getConfig: () => Promise<{ success: boolean; config?: IMGatewayConfig; error?: string }>;
-    setConfig: (config: Partial<IMGatewayConfig>) => Promise<{ success: boolean; error?: string }>;
+    setConfig: (config: Partial<IMGatewayConfig>, options?: { syncGateway?: boolean }) => Promise<{ success: boolean; error?: string }>;
+    syncConfig: () => Promise<{ success: boolean; error?: string }>;
     startGateway: (platform: 'dingtalk' | 'feishu' | 'qq' | 'telegram' | 'discord' | 'nim' | 'xiaomifeng' | 'wecom' | 'popo') => Promise<{ success: boolean; error?: string }>;
     stopGateway: (platform: 'dingtalk' | 'feishu' | 'qq' | 'telegram' | 'discord' | 'nim' | 'xiaomifeng' | 'wecom' | 'popo') => Promise<{ success: boolean; error?: string }>;
     testGateway: (

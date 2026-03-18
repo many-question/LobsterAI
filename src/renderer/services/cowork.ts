@@ -594,6 +594,19 @@ class CoworkService {
     return this.openClawStatus;
   }
 
+  async restartOpenClawGateway(): Promise<OpenClawEngineStatus | null> {
+    const engineApi = window.electron?.openclaw?.engine;
+    if (!engineApi?.restartGateway) {
+      return null;
+    }
+    const result = await engineApi.restartGateway();
+    if (result?.status) {
+      this.notifyOpenClawStatus(result.status);
+      return result.status;
+    }
+    return this.openClawStatus;
+  }
+
   async generateSessionTitle(prompt: string | null): Promise<string | null> {
     if (!window.electron?.generateSessionTitle) {
       return null;

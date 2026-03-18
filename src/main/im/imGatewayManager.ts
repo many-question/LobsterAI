@@ -390,7 +390,7 @@ export class IMGatewayManager extends EventEmitter {
   /**
    * Update configuration
    */
-  setConfig(config: Partial<IMGatewayConfig>): void {
+  setConfig(config: Partial<IMGatewayConfig>, options?: { syncGateway?: boolean }): void {
     const previousConfig = this.imStore.getConfig();
     this.imStore.setConfig(config);
 
@@ -402,7 +402,8 @@ export class IMGatewayManager extends EventEmitter {
 
     // Hot-update NIM config: if credential fields changed while gateway is connected,
     // restart the gateway transparently so the SDK re-logs in with new credentials.
-    if (config.nim && this.nimGateway) {
+    // Only perform hot-restart when syncGateway is explicitly true (i.e. user clicked Save).
+    if (options?.syncGateway && config.nim && this.nimGateway) {
       const oldNim = previousConfig.nim;
       const newNim = { ...oldNim, ...config.nim };
       const credentialsChanged =
@@ -440,8 +441,9 @@ export class IMGatewayManager extends EventEmitter {
     // Feishu now runs via OpenClaw; config sync is handled by IPC handler
 
 
-    // Hot-update Xiaomifeng config: restart if credential fields changed
-    if (config.xiaomifeng && this.xiaomifengGateway) {
+    // Hot-update Xiaomifeng config: restart if credential fields changed.
+    // Only perform hot-restart when syncGateway is explicitly true (i.e. user clicked Save).
+    if (options?.syncGateway && config.xiaomifeng && this.xiaomifengGateway) {
       const oldXmf = previousConfig.xiaomifeng;
       const newXmf = { ...oldXmf, ...config.xiaomifeng };
       const credentialsChanged =

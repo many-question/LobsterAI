@@ -484,14 +484,14 @@ export const getVisibleProviders = (language: 'zh' | 'en'): readonly string[] =>
   // }
 
   // 中文 → 中国版，英文 → 国际版
+  const allProviders = [...CHINA_PROVIDERS, ...GLOBAL_PROVIDERS];
   if (language === 'zh') {
-    return CHINA_PROVIDERS;
+    return allProviders;
   }
 
   const orderedProviders = [
     ...EN_PRIORITY_PROVIDERS,
-    ...CHINA_PROVIDERS,
-    ...GLOBAL_PROVIDERS,
+    ...allProviders,
   ];
   const uniqueProviders = [...new Set(orderedProviders)];
   // Move local/custom providers to the end, with custom last

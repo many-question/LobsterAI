@@ -115,6 +115,20 @@ class ApiService {
     return provider === 'openai';
   }
 
+  private shouldUseMaxCompletionTokensForOpenAI(provider: string, modelId?: string): boolean {
+    if (provider !== 'openai') {
+      return false;
+    }
+    const normalizedModel = (modelId ?? '').toLowerCase();
+    const resolvedModel = normalizedModel.includes('/')
+      ? normalizedModel.slice(normalizedModel.lastIndexOf('/') + 1)
+      : normalizedModel;
+    return resolvedModel.startsWith('gpt-5')
+      || resolvedModel.startsWith('o1')
+      || resolvedModel.startsWith('o3')
+      || resolvedModel.startsWith('o4');
+  }
+
   private buildImageHint(images?: ImageAttachment[]): string {
     if (!images?.length) return '';
     return `[images: ${images.length}]`;
@@ -363,6 +377,7 @@ class ApiService {
           baseUrl,
           provider: provider,
           apiFormat,
+          proxy: providerConfig.proxy,
         };
       }
     }
@@ -752,6 +767,7 @@ class ApiService {
               model: modelId,
               input: responseInputMessages,
               stream: true,
+              max_output_tokens: 8192,
             }
           : {
               model: modelId,
@@ -760,6 +776,13 @@ class ApiService {
             };
         if (useResponsesApi && systemInstructions) {
           requestBody.instructions = systemInstructions;
+        }
+        if (!useResponsesApi) {
+          if (this.shouldUseMaxCompletionTokensForOpenAI(provider, modelId)) {
+            requestBody.max_completion_tokens = 8192;
+          } else {
+            requestBody.max_tokens = 8192;
+          }
         }
 
         window.electron.api.stream({

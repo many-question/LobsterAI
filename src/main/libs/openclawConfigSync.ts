@@ -29,10 +29,6 @@ const mapExecutionModeToSandboxMode = (_mode: CoworkExecutionMode): 'off' | 'non
  */
 export const OPENCLAW_AGENT_TIMEOUT_SECONDS = 3600;
 
-const mapApiTypeToOpenClawApi = (apiType: 'anthropic' | 'openai' | undefined): 'anthropic-messages' | 'openai-completions' => {
-  return apiType === 'openai' ? 'openai-completions' : 'anthropic-messages';
-};
-
 const ensureDir = (dirPath: string): void => {
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
@@ -231,7 +227,11 @@ const sessionSnapshotContainsDisabledManagedSkill = (entry: Record<string, unkno
   return DISABLED_MANAGED_SKILL_NAMES.some((name) => prompt.includes(`<name>${name}</name>`));
 };
 
-type OpenClawProviderApi = 'anthropic-messages' | 'openai-completions';
+type OpenClawProviderApi =
+  | 'anthropic-messages'
+  | 'openai-completions'
+  | 'openai-responses'
+  | 'google-generative-ai';
 
 type OpenClawProviderSelection = {
   providerId: string;
@@ -283,6 +283,41 @@ const normalizeMoonshotBaseUrl = (rawBaseUrl: string): string => {
   return normalizeBaseUrlPath(trimmed, '/v1');
 };
 
+const normalizeOpenAIResponsesBaseUrl = (rawBaseUrl: string): string => {
+  const trimmed = rawBaseUrl.trim();
+  if (!trimmed) {
+    return 'https://api.openai.com/v1';
+  }
+  if (trimmed.endsWith('/responses')) {
+    return trimmed.slice(0, -'/responses'.length).replace(/\/+$/, '');
+  }
+  return normalizeBaseUrlPath(trimmed, '/v1');
+};
+
+const normalizeGeminiBaseUrl = (rawBaseUrl: string): string => {
+  const trimmed = rawBaseUrl.trim();
+  if (!trimmed) {
+    return 'https://generativelanguage.googleapis.com/v1beta';
+  }
+  const normalized = trimmed.replace(/\/+$/, '');
+  if (!normalized.includes('generativelanguage.googleapis.com')) {
+    return normalized;
+  }
+  if (normalized.endsWith('/v1beta/openai')) {
+    return normalized.slice(0, -'/openai'.length);
+  }
+  if (normalized.endsWith('/v1/openai')) {
+    return `${normalized.slice(0, -'/v1/openai'.length)}/v1beta`;
+  }
+  if (normalized.endsWith('/v1')) {
+    return `${normalized.slice(0, -'/v1'.length)}/v1beta`;
+  }
+  if (normalized.endsWith('/v1beta')) {
+    return normalized;
+  }
+  return normalizeBaseUrlPath(normalized, '/v1beta');
+};
+
 /**
  * Strip the `/chat/completions` endpoint suffix from a base URL so that the
  * OpenClaw gateway can append its own path without duplication.
@@ -320,10 +355,36 @@ const buildProviderSelection = (options: {
   supportsImage?: boolean;
 }): OpenClawProviderSelection => {
   const providerModelName = normalizeModelName(options.modelId);
-  const providerApi = mapApiTypeToOpenClawApi(options.apiType);
   const modelInput: string[] = options.supportsImage ? ['text', 'image'] : ['text'];
   const providerName = options.providerName ?? '';
   const codingPlanEnabled = !!options.codingPlanEnabled;
+  const providerApi: OpenClawProviderApi = (() => {
+    if (providerName === 'openai') {
+      return 'openai-responses';
+    }
+    if (providerName === 'gemini') {
+      return 'google-generative-ai';
+    }
+    return options.apiType === 'openai' ? 'openai-completions' : 'anthropic-messages';
+  })();
+  const providerId = (() => {
+    if (providerName === 'openai') {
+      return 'openai';
+    }
+    if (providerName === 'gemini') {
+      return 'google';
+    }
+    return 'lobster';
+  })();
+  const normalizedBaseUrl = (() => {
+    if (providerName === 'openai') {
+      return normalizeOpenAIResponsesBaseUrl(options.baseURL);
+    }
+    if (providerName === 'gemini') {
+      return normalizeGeminiBaseUrl(options.baseURL);
+    }
+    return stripChatCompletionsSuffix(options.baseURL);
+  })();
 
   // lobsterai-server: route through the LobsterAI server proxy
   if (providerName === 'lobsterai-server') {
@@ -421,12 +482,12 @@ const buildProviderSelection = (options: {
   }
 
   return {
-    providerId: 'lobster',
+    providerId,
     legacyModelId: options.modelId,
     sessionModelId: options.modelId,
-    primaryModel: `lobster/${options.modelId}`,
+    primaryModel: `${providerId}/${options.modelId}`,
     providerConfig: {
-      baseUrl: stripChatCompletionsSuffix(options.baseURL),
+      baseUrl: normalizedBaseUrl,
       api: providerApi,
       apiKey: `\${${providerApiKeyEnvVar(providerName)}}`,
       auth: 'api-key',

@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
-import { addMessage, clearCurrentSession, setCurrentSession, setStreaming, updateSessionStatus } from '../../store/slices/coworkSlice';
+import { addMessage, clearCurrentSession, setConfig as setCoworkConfig, setCurrentSession, setStreaming, updateSessionStatus } from '../../store/slices/coworkSlice';
+import { setAvailableModels, setSelectedModel } from '../../store/slices/modelSlice';
 import { clearActiveSkills, setActiveSkillIds } from '../../store/slices/skillSlice';
 import { setActions, selectAction, clearSelection } from '../../store/slices/quickActionSlice';
 import { coworkService } from '../../services/cowork';
+import { configService } from '../../services/config';
 import { skillService } from '../../services/skill';
 import { quickActionService } from '../../services/quickAction';
 import { i18nService } from '../../services/i18n';
@@ -17,7 +19,7 @@ import { ShieldCheckIcon } from '@heroicons/react/24/outline';
 import WindowTitleBar from '../window/WindowTitleBar';
 import { QuickActionBar, PromptPanel } from '../quick-actions';
 import type { SettingsOpenOptions } from '../Settings';
-import type { CoworkSession, CoworkImageAttachment, OpenClawEngineStatus } from '../../types/cowork';
+import type { CoworkConfig, CoworkMessage, CoworkSession, CoworkImageAttachment, OpenClawEngineStatus } from '../../types/cowork';
 
 export interface CoworkViewProps {
   onRequestAppSettings?: (options?: SettingsOpenOptions) => void;
@@ -54,6 +56,42 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
   const quickActions = useSelector((state: RootState) => state.quickAction.actions);
   const selectedActionId = useSelector((state: RootState) => state.quickAction.selectedActionId);
   const currentAgentId = useSelector((state: RootState) => state.agent.currentAgentId);
+  const selectedModel = useSelector((state: RootState) => state.model.selectedModel);
+
+  const isTemporarySession = (session: CoworkSession | null | undefined): boolean => {
+    return Boolean(session?.id?.startsWith('temp-'));
+  };
+
+  const resolveLatestCoworkConfig = async (): Promise<CoworkConfig> => {
+    const result = await window.electron?.cowork?.getConfig();
+    if (result?.success && result.config) {
+      dispatch(setCoworkConfig(result.config));
+      return result.config;
+    }
+    return config;
+  };
+
+  const ensureSelectedModelSynced = async () => {
+    if (!selectedModel?.id) {
+      return;
+    }
+
+    const latestConfig = configService.getConfig();
+    if (
+      latestConfig.model.defaultModel === selectedModel.id
+      && (latestConfig.model.defaultModelProvider ?? '') === (selectedModel.providerKey ?? '')
+    ) {
+      return;
+    }
+
+    await configService.updateConfig({
+      model: {
+        ...latestConfig.model,
+        defaultModel: selectedModel.id,
+        defaultModelProvider: selectedModel.providerKey,
+      },
+    });
+  };
 
   const buildApiConfigNotice = (error?: string) => {
     const baseNotice = i18nService.t('coworkModelSettingsRequired');
@@ -103,6 +141,165 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
     } finally {
       setIsRestartingGateway(false);
     }
+  };
+
+  const focusPromptInput = (clear = false) => {
+    if (clear) {
+      promptInputRef.current?.setValue('');
+    }
+    promptInputRef.current?.focus();
+  };
+
+  const refreshModelStateFromConfig = async () => {
+    await configService.init();
+    const latestConfig = configService.getConfig();
+    const providerModels: Array<{ id: string; name: string; provider?: string; providerKey?: string; supportsImage?: boolean }> = [];
+
+    if (latestConfig.providers) {
+      Object.entries(latestConfig.providers).forEach(([providerName, providerConfig]) => {
+        if (!providerConfig.enabled || !providerConfig.models) {
+          return;
+        }
+        providerConfig.models.forEach((model) => {
+          providerModels.push({
+            id: model.id,
+            name: model.name,
+            provider: providerName.charAt(0).toUpperCase() + providerName.slice(1),
+            providerKey: providerName,
+            supportsImage: model.supportsImage ?? false,
+          });
+        });
+      });
+    }
+
+    const fallbackModels = latestConfig.model.availableModels.map((model) => ({
+      id: model.id,
+      name: model.name,
+      providerKey: undefined,
+      supportsImage: model.supportsImage ?? false,
+    }));
+
+    const resolvedModels = providerModels.length > 0 ? providerModels : fallbackModels;
+    if (resolvedModels.length === 0) {
+      return;
+    }
+
+    dispatch(setAvailableModels(resolvedModels));
+    const preferredModel = resolvedModels.find((model) => (
+      model.id === latestConfig.model.defaultModel
+      && (!latestConfig.model.defaultModelProvider || model.providerKey === latestConfig.model.defaultModelProvider)
+    )) ?? resolvedModels[0];
+    dispatch(setSelectedModel(preferredModel));
+  };
+
+  const postLocalSystemMessage = (content: string, title?: string) => {
+    const timestamp = Date.now();
+    const message: CoworkMessage = {
+      id: `local-system-${timestamp}`,
+      type: 'system',
+      content,
+      timestamp,
+    };
+
+    if (currentSession) {
+      dispatch(addMessage({ sessionId: currentSession.id, message }));
+      return;
+    }
+
+    const tempSession: CoworkSession = {
+      id: `temp-command-${timestamp}`,
+      threadSeq: null,
+      title: title || i18nService.t('coworkNewSession'),
+      claudeSessionId: null,
+      status: 'completed',
+      pinned: false,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      cwd: config.workingDirectory || '',
+      systemPrompt: '',
+      executionMode: config.executionMode || 'local',
+      activeSkillIds: [],
+      agentId: currentAgentId,
+      messages: [message],
+    };
+
+    dispatch(setCurrentSession(tempSession));
+    dispatch(setStreaming(false));
+  };
+
+  const openNewContext = () => {
+    if (currentSession?.id.startsWith('temp-') && pendingStartRef.current) {
+      pendingStartRef.current.cancelled = true;
+    }
+
+    if (onNewChat) {
+      onNewChat();
+      return;
+    }
+
+    coworkService.clearSession();
+    dispatch(clearSelection());
+    focusPromptInput(true);
+  };
+
+  const stopCurrentRun = async () => {
+    if (!currentSession) {
+      return;
+    }
+
+    if (isTemporarySession(currentSession) && pendingStartRef.current) {
+      pendingStartRef.current.cancelled = true;
+    }
+
+    if (isTemporarySession(currentSession)) {
+      coworkService.clearSession();
+      dispatch(setStreaming(false));
+      return;
+    }
+
+    await coworkService.stopSession(currentSession.id);
+  };
+
+  const executeSlashCommandIfNeeded = async (prompt: string): Promise<boolean> => {
+    const result = await coworkService.executeCommand({
+      input: prompt,
+      currentSessionId: isTemporarySession(currentSession) ? null : (currentSession?.id ?? null),
+      isStreaming,
+    });
+
+    if (!result?.handled) {
+      return false;
+    }
+
+    for (const action of result.actions ?? []) {
+      if (action.type === 'stop_current_session') {
+        await stopCurrentRun();
+      }
+      if (action.type === 'new_chat') {
+        openNewContext();
+      }
+      if (action.type === 'refresh_model_state') {
+        await refreshModelStateFromConfig();
+      }
+      if (action.type === 'refresh_cowork_config') {
+        await coworkService.loadConfig();
+      }
+      if (action.type === 'open_session' && action.sessionId) {
+        await coworkService.loadSession(action.sessionId);
+        dispatch(clearSelection());
+        focusPromptInput();
+      }
+    }
+
+    if (
+      result.output
+      && !(result.actions ?? []).some((action) => action.type === 'new_chat' || action.type === 'open_session')
+    ) {
+      const title = result.commandName ? `/${result.commandName}` : i18nService.t('coworkNewSession');
+      postLocalSystemMessage(result.output, title);
+    }
+
+    return true;
   };
 
   useEffect(() => {
@@ -156,6 +353,9 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
   }, [dispatch]);
 
   const handleStartSession = async (prompt: string, skillPrompt?: string, imageAttachments?: CoworkImageAttachment[]): Promise<boolean | void> => {
+    if (await executeSlashCommandIfNeeded(prompt)) {
+      return;
+    }
     if (isOpenClawEngine && openClawStatus && !isOpenClawReadyForSession(openClawStatus)) {
       window.dispatchEvent(new CustomEvent('app:showToast', { detail: i18nService.t('coworkErrorEngineNotReady') }));
       return false;
@@ -185,6 +385,8 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
         console.error('Failed to check cowork API config:', error);
       }
 
+      const latestCoworkConfig = await resolveLatestCoworkConfig();
+
       // Create a temporary session with user message to show immediately
       const tempSessionId = `temp-${Date.now()}`;
       const fallbackTitle = prompt.split('\n')[0].slice(0, 50) || i18nService.t('coworkNewSession');
@@ -195,15 +397,16 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
 
       const tempSession: CoworkSession = {
         id: tempSessionId,
+        threadSeq: null,
         title: fallbackTitle,
         claudeSessionId: null,
         status: 'running',
         pinned: false,
         createdAt: now,
         updatedAt: now,
-        cwd: config.workingDirectory || '',
+        cwd: latestCoworkConfig.workingDirectory || '',
         systemPrompt: '',
-        executionMode: config.executionMode || 'local',
+        executionMode: latestCoworkConfig.executionMode || 'local',
         activeSkillIds: sessionSkillIds,
         agentId: currentAgentId,
         messages: [
@@ -240,15 +443,17 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
       if (!skillPrompt && !isOpenClawEngine) {
         effectiveSkillPrompt = await skillService.getAutoRoutingPrompt() || undefined;
       }
-      const combinedSystemPrompt = [effectiveSkillPrompt, config.systemPrompt]
+      const combinedSystemPrompt = [effectiveSkillPrompt, latestCoworkConfig.systemPrompt]
         .filter(p => p?.trim())
         .join('\n\n') || undefined;
+
+      await ensureSelectedModelSynced();
 
       // Start the actual session immediately with fallback title
       const { session: startedSession, error: startError } = await coworkService.startSession({
         prompt,
         title: fallbackTitle,
-        cwd: config.workingDirectory || undefined,
+        cwd: latestCoworkConfig.workingDirectory || undefined,
         systemPrompt: combinedSystemPrompt,
         activeSkillIds: sessionSkillIds,
         agentId: currentAgentId,
@@ -296,6 +501,13 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
 
   const handleContinueSession = async (prompt: string, skillPrompt?: string, imageAttachments?: CoworkImageAttachment[]) => {
     if (!currentSession) return;
+    if (await executeSlashCommandIfNeeded(prompt)) {
+      return;
+    }
+    if (isTemporarySession(currentSession)) {
+      await handleStartSession(prompt, skillPrompt, imageAttachments);
+      return;
+    }
     if (isOpenClawEngine && openClawStatus && !isOpenClawReadyForSession(openClawStatus)) {
       window.dispatchEvent(new CustomEvent('app:showToast', { detail: i18nService.t('coworkErrorEngineNotReady') }));
       return false;
@@ -316,15 +528,19 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
       dispatch(clearActiveSkills());
     }
 
+    const latestCoworkConfig = await resolveLatestCoworkConfig();
+
     // Combine skill prompt with system prompt for continuation.
     // Skip auto-routing prompt for OpenClaw — skills are loaded natively.
     let effectiveSkillPrompt = skillPrompt;
     if (!skillPrompt && !isOpenClawEngine) {
       effectiveSkillPrompt = await skillService.getAutoRoutingPrompt() || undefined;
     }
-    const combinedSystemPrompt = [effectiveSkillPrompt, config.systemPrompt]
+    const combinedSystemPrompt = [effectiveSkillPrompt, latestCoworkConfig.systemPrompt]
       .filter(p => p?.trim())
       .join('\n\n') || undefined;
+
+    await ensureSelectedModelSynced();
 
     await coworkService.continueSession({
       sessionId: currentSession.id,
@@ -336,11 +552,7 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
   };
 
   const handleStopSession = async () => {
-    if (!currentSession) return;
-    if (currentSession.id.startsWith('temp-') && pendingStartRef.current) {
-      pendingStartRef.current.cancelled = true;
-    }
-    await coworkService.stopSession(currentSession.id);
+    await stopCurrentRun();
   };
 
   // Get selected quick action

@@ -1,6 +1,7 @@
 import { store } from '../store';
 import { configService } from './config';
 import { ChatMessagePayload, ChatUserMessageInput, ImageAttachment } from '../types/chat';
+import type { ProxyConfig } from '../../shared/proxy';
 
 const ZHIPU_CODING_PLAN_OPENAI_BASE_URL = 'https://open.bigmodel.cn/api/coding/paas/v4';
 const ZHIPU_CODING_PLAN_ANTHROPIC_BASE_URL = 'https://open.bigmodel.cn/api/anthropic';
@@ -19,6 +20,7 @@ export interface ApiConfig {
   baseUrl: string;
   provider?: string;
   apiFormat?: 'anthropic' | 'openai';
+  proxy?: ProxyConfig;
 }
 
 export class ApiError extends Error {
@@ -263,18 +265,18 @@ class ApiService {
   }
 
   private providerRequiresApiKey(provider: string): boolean {
-    return provider !== 'ollama';
+    return provider !== 'ollama' && provider !== 'lmstudio';
   }
 
   // 检测当前选择的模型属于哪个 provider
   private detectProvider(modelId: string, providerHint?: string): string {
     const normalizedHint = providerHint?.toLowerCase();
-    if (
-      normalizedHint
-      && ['openai', 'deepseek', 'moonshot', 'zhipu', 'minimax', 'youdaozhiyun', 'qwen', 'openrouter', 'gemini', 'anthropic', 'xiaomi', 'stepfun', 'volcengine', 'ollama', 'custom'].includes(normalizedHint)
-    ) {
-      return normalizedHint;
-    }
+      if (
+        normalizedHint
+        && ['openai', 'deepseek', 'moonshot', 'zhipu', 'minimax', 'youdaozhiyun', 'qwen', 'openrouter', 'gemini', 'anthropic', 'xiaomi', 'stepfun', 'volcengine', 'lmstudio', 'ollama', 'custom'].includes(normalizedHint)
+      ) {
+        return normalizedHint;
+      }
     const normalizedModelId = modelId.toLowerCase();
     if (normalizedModelId.startsWith('claude')) {
       return 'anthropic';
@@ -545,6 +547,7 @@ class ApiService {
           },
           body: JSON.stringify(requestBody),
           requestId,
+          proxy: config.proxy,
         }).then((response) => {
           if (!response.ok && !aborted) {
             this.cleanup();
@@ -765,6 +768,7 @@ class ApiService {
           headers,
           body: JSON.stringify(requestBody),
           requestId,
+          proxy: config.proxy,
         }).then((response) => {
           if (!response.ok && !aborted) {
             this.cleanup();

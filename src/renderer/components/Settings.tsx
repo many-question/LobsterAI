@@ -29,6 +29,7 @@ import IMSettings from './im/IMSettings';
 import { imService } from '../services/im';
 import EmailSkillConfig from './skills/EmailSkillConfig';
 import { defaultConfig, type AppConfig, getVisibleProviders } from '../config';
+import { normalizeProxyConfig, type ProxyConfig } from '../../shared/proxy';
 import {
   OpenAIIcon,
   DeepSeekIcon,
@@ -73,6 +74,7 @@ const providerKeys = [
   'stepfun',
   'xiaomi',
   'openrouter',
+  'lmstudio',
   'ollama',
   'custom',
 ] as const;
@@ -91,6 +93,7 @@ interface ProviderExportEntry {
   enabled: boolean;
   apiKey: PasswordEncryptedPayload;
   baseUrl: string;
+  proxy?: ProxyConfig;
   apiFormat?: 'anthropic' | 'openai';
   codingPlanEnabled?: boolean;
   models?: Model[];
@@ -114,6 +117,7 @@ interface ProvidersImportEntry {
   apiKeyEncrypted?: string;
   apiKeyIv?: string;
   baseUrl?: string;
+  proxy?: ProxyConfig;
   apiFormat?: 'anthropic' | 'openai' | 'native';
   codingPlanEnabled?: boolean;
   models?: Model[];
@@ -144,6 +148,7 @@ const providerMeta: Record<ProviderType, { label: string; icon: React.ReactNode 
   stepfun: { label: 'StepFun', icon: <StepfunIcon /> },
   volcengine: { label: 'Volcengine', icon: <VolcengineIcon /> },
   openrouter: { label: 'OpenRouter', icon: <OpenRouterIcon /> },
+  lmstudio: { label: 'LM Studio', icon: <CustomProviderIcon /> },
   ollama: { label: 'Ollama', icon: <OllamaIcon /> },
   custom: { label: 'Custom', icon: <CustomProviderIcon /> },
 };
@@ -181,6 +186,10 @@ const providerSwitchableDefaultBaseUrls: Partial<Record<ProviderType, { anthropi
     anthropic: 'https://openrouter.ai/api',
     openai: 'https://openrouter.ai/api/v1',
   },
+  lmstudio: {
+    anthropic: 'http://localhost:1234',
+    openai: 'http://localhost:1234/v1',
+  },
   ollama: {
     anthropic: 'http://localhost:11434',
     openai: 'http://localhost:11434/v1',
@@ -191,7 +200,7 @@ const providerSwitchableDefaultBaseUrls: Partial<Record<ProviderType, { anthropi
   },
 };
 
-const providerRequiresApiKey = (provider: ProviderType) => provider !== 'ollama';
+const providerRequiresApiKey = (provider: ProviderType) => provider !== 'ollama' && provider !== 'lmstudio';
 const normalizeBaseUrl = (baseUrl: string): string => baseUrl.trim().replace(/\/+$/, '').toLowerCase();
 const normalizeApiFormat = (value: unknown): 'anthropic' | 'openai' => (
   value === 'openai' ? 'openai' : 'anthropic'
@@ -375,6 +384,8 @@ const shouldUseMaxCompletionTokensForOpenAI = (provider: string, modelId?: strin
     || resolvedModel.startsWith('o4');
 };
 const CONNECTIVITY_TEST_TOKEN_BUDGET = 64;
+const getProxyMode = (proxy?: ProxyConfig): 'inherit' | 'direct' | 'custom' => normalizeProxyConfig(proxy).mode ?? 'inherit';
+const getProxyUrl = (proxy?: ProxyConfig): string => normalizeProxyConfig(proxy).url ?? '';
 
 const getDefaultProviders = (): ProvidersConfig => {
   const providers = (defaultConfig.providers ?? {}) as ProvidersConfig;
@@ -384,6 +395,7 @@ const getDefaultProviders = (): ProvidersConfig => {
       providerKey,
       {
         ...providerConfig,
+        proxy: normalizeProxyConfig(providerConfig.proxy),
         models: providerConfig.models?.map(model => ({
           ...model,
           supportsImage: model.supportsImage ?? false,
@@ -779,6 +791,17 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
               baseUrl: config.api.baseUrl
             }
           }));
+        } else if (normalizedApiBaseUrl.includes('localhost:1234') || normalizedApiBaseUrl.includes('127.0.0.1:1234')) {
+          setActiveProvider('lmstudio');
+          setProviders(prev => ({
+            ...prev,
+            lmstudio: {
+              ...prev.lmstudio,
+              enabled: true,
+              apiKey: config.api.key,
+              baseUrl: config.api.baseUrl
+            }
+          }));
         } else if (normalizedApiBaseUrl.includes('ollama') || normalizedApiBaseUrl.includes('11434')) {
           setActiveProvider('ollama');
           setProviders(prev => ({
@@ -820,6 +843,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
                 {
                   ...providerConfig,
                   apiFormat: getEffectiveApiFormat(providerKey, (providerConfig as ProviderConfig).apiFormat),
+                  proxy: normalizeProxyConfig((providerConfig as ProviderConfig).proxy),
                   models,
                 },
               ];
@@ -915,11 +939,39 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
   // Handle provider configuration change
   const handleProviderConfigChange = (provider: ProviderType, field: string, value: string) => {
     setProviders(prev => {
+      if (field === 'proxyMode') {
+        return {
+          ...prev,
+          [provider]: {
+            ...prev[provider],
+            proxy: normalizeProxyConfig({
+              ...prev[provider].proxy,
+              mode: value as ProxyConfig['mode'],
+            }),
+          },
+        };
+      }
+
+      if (field === 'proxyUrl') {
+        return {
+          ...prev,
+          [provider]: {
+            ...prev[provider],
+            proxy: normalizeProxyConfig({
+              ...prev[provider].proxy,
+              mode: 'custom',
+              url: value,
+            }),
+          },
+        };
+      }
+
       if (field === 'apiFormat') {
         const nextApiFormat = getEffectiveApiFormat(provider, value);
         const nextProviderConfig: ProviderConfig = {
           ...prev[provider],
           apiFormat: nextApiFormat,
+          proxy: normalizeProxyConfig(prev[provider].proxy),
         };
 
         // Only auto-switch URL when current value is still a known default URL.
@@ -944,6 +996,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
           zhipu: {
             ...prev.zhipu,
             codingPlanEnabled,
+            proxy: normalizeProxyConfig(prev.zhipu.proxy),
           },
         };
       }
@@ -956,6 +1009,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
           qwen: {
             ...prev.qwen,
             codingPlanEnabled,
+            proxy: normalizeProxyConfig(prev.qwen.proxy),
           },
         };
       }
@@ -968,6 +1022,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
           volcengine: {
             ...prev.volcengine,
             codingPlanEnabled,
+            proxy: normalizeProxyConfig(prev.volcengine.proxy),
           },
         };
       }
@@ -980,6 +1035,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
           moonshot: {
             ...prev.moonshot,
             codingPlanEnabled,
+            proxy: normalizeProxyConfig(prev.moonshot.proxy),
           },
         };
       }
@@ -988,6 +1044,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
         ...prev,
         [provider]: {
           ...prev[provider],
+          proxy: normalizeProxyConfig(prev[provider].proxy),
           [field]: value,
         },
       };
@@ -1022,6 +1079,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
           'Accept': 'application/json',
         },
         body: codeBody,
+        proxy: normalizeProxyConfig(providers.minimax.proxy),
       });
 
       if (!codeRes.ok) {
@@ -1086,6 +1144,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
             'Accept': 'application/json',
           },
           body: tokenBody,
+          proxy: normalizeProxyConfig(providers.minimax.proxy),
         });
 
         const tokenPayload = (tokenRes.data ?? {}) as {
@@ -1367,6 +1426,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
               ...providerConfig,
               apiFormat,
               baseUrl: resolveBaseUrl(providerKey as ProviderType, providerConfig.baseUrl, apiFormat),
+              proxy: normalizeProxyConfig(providerConfig.proxy),
             },
           ];
         })
@@ -1530,7 +1590,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
   const handleSaveNewModel = () => {
     const modelId = newModelId.trim();
 
-    if (activeProvider === 'ollama') {
+    if (activeProvider === 'ollama' || activeProvider === 'lmstudio') {
       // For Ollama, only the model name (stored as modelId) is required
       if (!modelId) {
         setModelFormError(i18nService.t('ollamaModelNameRequired'));
@@ -1545,7 +1605,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
     }
 
     // For Ollama, auto-fill display name from modelId if not provided
-    const modelName = activeProvider === 'ollama'
+    const modelName = activeProvider === 'ollama' || activeProvider === 'lmstudio'
       ? (newModelName.trim() && newModelName.trim() !== modelId ? newModelName.trim() : modelId)
       : newModelName.trim();
 
@@ -1706,6 +1766,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
             max_tokens: CONNECTIVITY_TEST_TOKEN_BUDGET,
             messages: [{ role: 'user', content: 'Hi' }],
           }),
+          proxy: normalizeProxyConfig(providerConfig.proxy),
         });
       } else {
         const useResponsesApi = shouldUseOpenAIResponsesForProvider(testingProvider);
@@ -1740,6 +1801,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
           method: 'POST',
           headers,
           body: JSON.stringify(openAIRequestBody),
+          proxy: normalizeProxyConfig(providerConfig.proxy),
         });
       }
 
@@ -1778,6 +1840,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
             enabled: providerConfig.enabled,
             apiKey,
             baseUrl: resolveBaseUrl(providerKey as ProviderType, providerConfig.baseUrl, apiFormat),
+            proxy: normalizeProxyConfig(providerConfig.proxy),
             apiFormat,
             codingPlanEnabled: (providerConfig as ProviderConfig).codingPlanEnabled,
             models: providerConfig.models,
@@ -1915,6 +1978,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
           enabled: typeof providerData.enabled === 'boolean' ? providerData.enabled : providers[providerKey].enabled,
           apiKey: apiKey ?? providers[providerKey].apiKey,
           baseUrl: typeof providerData.baseUrl === 'string' ? providerData.baseUrl : providers[providerKey].baseUrl,
+          proxy: normalizeProxyConfig(providerData.proxy ?? providers[providerKey].proxy),
           apiFormat: getEffectiveApiFormat(providerKey, providerData.apiFormat ?? providers[providerKey].apiFormat),
           codingPlanEnabled: typeof providerData.codingPlanEnabled === 'boolean' ? providerData.codingPlanEnabled : (providers[providerKey] as ProviderConfig).codingPlanEnabled,
           models: models ?? providers[providerKey].models,
@@ -1993,6 +2057,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
           enabled: typeof providerData.enabled === 'boolean' ? providerData.enabled : providers[providerKey].enabled,
           apiKey: apiKey ?? providers[providerKey].apiKey,
           baseUrl: typeof providerData.baseUrl === 'string' ? providerData.baseUrl : providers[providerKey].baseUrl,
+          proxy: normalizeProxyConfig(providerData.proxy ?? providers[providerKey].proxy),
           apiFormat: getEffectiveApiFormat(providerKey, providerData.apiFormat ?? providers[providerKey].apiFormat),
           codingPlanEnabled: typeof providerData.codingPlanEnabled === 'boolean' ? providerData.codingPlanEnabled : (providers[providerKey] as ProviderConfig).codingPlanEnabled,
           models: models ?? providers[providerKey].models,
@@ -2947,6 +3012,34 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
               )}
 
               {/* API 格式选择器 */}
+              {!(activeProvider === 'minimax' && providers.minimax.authType === 'oauth') && (
+                <div>
+                  <label className="block text-xs font-medium dark:text-claude-darkText text-claude-text mb-1">
+                    {language === 'zh' ? '代理' : 'Proxy'}
+                  </label>
+                  <div className="space-y-2">
+                    <select
+                      value={getProxyMode(providers[activeProvider].proxy)}
+                      onChange={(e) => handleProviderConfigChange(activeProvider, 'proxyMode', e.target.value)}
+                      className="block w-full rounded-xl bg-claude-surfaceInset dark:bg-claude-darkSurfaceInset dark:border-claude-darkBorder border-claude-border border focus:border-claude-accent focus:ring-1 focus:ring-claude-accent/30 dark:text-claude-darkText text-claude-text px-3 py-2 text-xs"
+                    >
+                      <option value="inherit">{language === 'zh' ? '继承全局设置' : 'Inherit Global Setting'}</option>
+                      <option value="direct">{language === 'zh' ? '直连' : 'Direct'}</option>
+                      <option value="custom">{language === 'zh' ? '自定义 HTTP 代理' : 'Custom HTTP Proxy'}</option>
+                    </select>
+                    {getProxyMode(providers[activeProvider].proxy) === 'custom' && (
+                      <input
+                        type="text"
+                        value={getProxyUrl(providers[activeProvider].proxy)}
+                        onChange={(e) => handleProviderConfigChange(activeProvider, 'proxyUrl', e.target.value)}
+                        className="block w-full rounded-xl bg-claude-surfaceInset dark:bg-claude-darkSurfaceInset dark:border-claude-darkBorder border-claude-border border focus:border-claude-accent focus:ring-1 focus:ring-claude-accent/30 dark:text-claude-darkText text-claude-text px-3 py-2 text-xs"
+                        placeholder="http://127.0.0.1:7890"
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+
               {shouldShowApiFormatSelector(activeProvider) && !(activeProvider === 'minimax' && providers.minimax.authType === 'oauth') && (
                 <div>
                   <label htmlFor={`${activeProvider}-apiFormat`} className="block text-xs font-medium dark:text-claude-darkText text-claude-text mb-1">
@@ -3603,7 +3696,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, onUpda
                 )}
 
                 <div className="space-y-3">
-                  {activeProvider === 'ollama' ? (
+                  {activeProvider === 'ollama' || activeProvider === 'lmstudio' ? (
                     <>
                       <div>
                         <label className="block text-xs font-medium dark:text-claude-darkTextSecondary text-claude-textSecondary mb-1">

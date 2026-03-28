@@ -643,6 +643,7 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
       // Return a transient session (not saved to database)
       return {
         id: `transient-${sessionKey}`,
+        threadSeq: null,
         title: sessionKey.split(':').pop() || 'Cron Session',
         claudeSessionId: null,
         status: 'completed' as CoworkSessionStatus,
@@ -740,6 +741,7 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
       const firstTimestamp = messages[0]?.timestamp ?? Date.now();
       return {
         id: `transient-${sessionKey}`,
+        threadSeq: null,
         agentId: '',
         title: sessionKey.split(':').pop() || 'Cron Session',
         claudeSessionId: null,
@@ -1723,7 +1725,6 @@ export class OpenClawRuntimeAdapter extends EventEmitter implements CoworkRuntim
   private async loadGatewayClientCtor(clientEntryPath: string): Promise<GatewayClientCtor> {
     // Use require() with file path directly. TypeScript's CJS output downgrades
     // dynamic import() to require(), which doesn't support file:// URLs.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const loaded = require(clientEntryPath) as Record<string, unknown>;
     const direct = loaded.GatewayClient;
     if (typeof direct === 'function') {

@@ -1,0 +1,1238 @@
+
+> lobsterai@2026.3.26 electron:dev
+> rimraf dist-electron && npm run compile:electron && concurrently "vite --port 5175" "wait-on -v -t 120000 -d 20000 tcp:5175 dist-electron/.electron-ready && npm run start:electron"
+
+
+> lobsterai@2026.3.26 compile:electron
+> tsc --project electron-tsconfig.json
+
+[1] waiting for 2 resources: tcp:5175, dist-electron/.electron-ready
+[0] [33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+[0] 
+[0]   [32m[1mVITE[22m v5.4.21[39m  [2mready in [0m[1m347[22m[2m[0m ms[22m
+[0] 
+[0]   [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5175[22m/[39m
+[0]   [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.1.9:[1m5175[22m/[39m
+[0]   [32m➜[39m  [1mNetwork[22m: [36mhttp://172.17.208.1:[1m5175[22m/[39m
+[0]   [32m➜[39m  [1mNetwork[22m: [36mhttp://172.19.240.1:[1m5175[22m/[39m
+[0]   [32m➜[39m  [1mNetwork[22m: [36mhttp://172.28.224.1:[1m5175[22m/[39m
+[0]   [32m➜[39m  [1mNetwork[22m: [36mhttp://172.29.48.1:[1m5175[22m/[39m
+[0] [36mvite v5.4.21 [32mbuilding for development...[36m[39m
+[0] [36m
+[0] watching for file changes...[39m
+[0] [36mvite v5.4.21 [32mbuilding for development...[36m[39m
+[0] [36m
+[0] watching for file changes...[39m
+[0] [36m
+[0] build started...[39m
+[0] [36m
+[0] build started...[39m
+[0] transforming...
+[0] transforming...
+[0] [32m✓[39m 2 modules transformed.
+[0] rendering chunks...
+[0] computing gzip size...
+[0] [2mdist-electron/[22m[36mpreload.js  [39m[1m[2m19.46 kB[22m[1m[22m[2m │ gzip: 3.45 kB[22m[2m │ map: 41.16 kB[22m
+[0] [36mbuilt in 809ms.[39m
+[0] [32m✓[39m 982 modules transformed.
+[0] rendering chunks...
+[0] computing gzip size...
+[0] [2mdist-electron/[22m[36mmain.js  [39m[1m[33m6,312.07 kB[39m[22m[2m │ gzip: 801.76 kB[22m[2m │ map: 11,572.12 kB[22m
+[0] [36mbuilt in 12969ms.[39m
+[1] making TCP connection to 5175 ...
+[1] checking file stat for file:dist-electron/.electron-ready ...
+[1]   file exists, checking for size changes, size:0 file:dist-electron/.electron-ready
+[1]   TCP connection successful to host:localhost port:5175
+[1] waiting for 1 resources: dist-electron/.electron-ready
+[1] checking file stat for file:dist-electron/.electron-ready ...
+[1]   file exists, checking for size change during stability window, size:0 file:dist-electron/.electron-ready
+[1] checking file stat for file:dist-electron/.electron-ready ...
+[1]   file exists, checking for size change during stability window, size:0 file:dist-electron/.electron-ready
+[1] checking file stat for file:dist-electron/.electron-ready ...
+[1]   file stabilized at size:0 file:dist-electron/.electron-ready
+[1] wait-on(49384) complete
+[1] 
+[1] > lobsterai@2026.3.26 start:electron
+[1] > node scripts/start-electron-dev.cjs
+[1] 
+[1] 
+[1] [Main] initApp: waiting for app.whenReady()
+[1] [Main] initApp: app is ready
+[1] [Main] initApp: default project dir ensured
+[1] [Main] initApp: starting initStore()
+[1] [Main] initApp: store initialized
+[1] [Main] initApp: resetRunningSessions done, count: 0
+[1] [OpenClawConfigSync] sync() managedConfig key fields: {
+[1]   providers: {
+[1]     lobster: {
+[1]       baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+[1]       api: 'openai-completions',
+[1]       apiKey: '${LOBSTER_APIKEY_GEMINI}',
+[1]       auth: 'api-key',
+[1]       models: [Array]
+[1]     }
+[1]   },
+[1]   primaryModel: { primary: 'lobster/gemini-3-flash-preview' }
+[1] }
+[1] [McpBridge] startMcpBridge called
+[1] [McpBridge] enabledServers: 0 ()
+[1] [McpBridge] no enabled MCP servers, skipping bridge startup
+[1] [Main] initApp: setStoreGetter done
+[1] [Main] initApp: getSkillManager done
+[1] [Main] initApp: syncBundledSkillsToUserData done
+[1] [python-runtime] User runtime already healthy
+[1] [Main] initApp: ensurePythonRuntimeReady done
+[1] [Main] initApp: startWatching done
+[1] [Main] initApp: getSkillServiceManager done
+[1] [SkillServices] Starting skill services...
+[1] [SkillServices] Starting Web Search Bridge Server...
+[1] [SkillServices] Web Search Bridge Server starting (PID: 49360, runtime: node)
+[1] [SkillServices] Logs: D:\repositories\LobsterAI\SKILLs\web-search\.server.log
+[1] [OpenClawConfigSync] sync() managedConfig key fields: {
+[1]   providers: {
+[1]     lobster: {
+[1]       baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+[1]       api: 'openai-completions',
+[1]       apiKey: '${LOBSTER_APIKEY_GEMINI}',
+[1]       auth: 'api-key',
+[1]       models: [Array]
+[1]     }
+[1]   },
+[1]   primaryModel: { primary: 'lobster/gemini-3-flash-preview' }
+[1] }
+[1] [OpenClaw] synced local extensions: mcp-bridge
+[1] [OpenClaw] startGateway: ensureReady done (5ms), phase=ready
+[1] [OpenClaw] startGateway: resolveRuntimeMetadata done (6ms), root=found
+[1] [OpenClaw] ensureBareEntryFiles: bundle exists, skipping dist extraction
+[1] [OpenClaw] ensureBareEntryFiles: completed in 0ms
+[1] [OpenClaw] startGateway: ensureBareEntryFiles done (8ms)
+[1] [OpenClaw] resolveOpenClawEntry: using bundle fast path
+[1] [OpenClaw] startGateway: resolveOpenClawEntry done (9ms), entry=D:\repositories\LobsterAI\vendor\openclaw-runtime\current\gateway-launcher.cjs
+[1] [OpenClaw] startGateway: ensureGatewayToken done (9ms)
+[1] [OpenClaw] startGateway: resolveGatewayPort done (41ms), port=18789
+[1] [OpenClaw] startGateway: pre-fork setup done (42ms)
+[1] [OpenClaw] compile cache dir: C:\Users\jielu\AppData\Roaming\LobsterAI\openclaw\state\.compile-cache
+[1] [OpenClaw] injected TZ=Asia/Shanghai into gateway env
+[1] [OpenClaw] forking gateway: entry=D:\repositories\LobsterAI\vendor\openclaw-runtime\current\gateway-launcher.cjs, cwd=D:\repositories\LobsterAI\vendor\openclaw-runtime\current, port=18789, args=["gateway","--bind","loopback","--port","18789","--token","7b0bda2200d6401fb4c70c041f3cba8647f0aed8a5b3eeee","--verbose"]
+[1] [OpenClaw] startGateway: gateway process created (66ms), platform=win32
+[1] [OpenClaw] gateway process spawned (72ms), pid=29800
+[1] [OpenClaw stderr] [openclaw-launcher] compile-cache dir=C:\Users\jielu\AppData\Roaming\LobsterAI\openclaw\state\.compile-cache\v24.11.1-x64-e4fd8016
+[1] 
+[1] [OpenClaw stderr] [openclaw-launcher] loading bundle (3ms)
+[1] 
+[1] [OpenClawConfigSync] sync() managedConfig key fields: {
+[1]   providers: {
+[1]     lobster: {
+[1]       baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+[1]       api: 'openai-completions',
+[1]       apiKey: '${LOBSTER_APIKEY_GEMINI}',
+[1]       auth: 'api-key',
+[1]       models: [Array]
+[1]     }
+[1]   },
+[1]   primaryModel: { primary: 'lobster/gemini-3-flash-preview' }
+[1] }
+[1] [OpenClaw stderr] [openclaw-launcher] import ok (1423ms)
+[1] 
+[1] [OpenClaw stderr] Config warnings:\n- plugins.entries.mcp-bridge: plugin mcp-bridge: plugin id mismatch (manifest uses "mcp-bridge", entry hints "openclaw-mcp-bridge")
+[1] - plugins.entries.nim: plugin not found: nim (stale config entry ignored; remove it from plugins config)
+[1] 
+[1] [OpenClaw stderr] 2026-03-28T22:42:33.129+08:00 Config warnings:\n- plugins.entries.mcp-bridge: plugin mcp-bridge: plugin id mismatch (manifest uses "mcp-bridge", entry hints "openclaw-mcp-bridge")
+[1] - plugins.entries.nim: plugin not found: nim (stale config entry ignored; remove it from plugins config)
+[1] 
+[1] [OpenClaw stderr] 2026-03-28T22:42:33.140+08:00 (node:29800) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+[1] (Use `electron --trace-deprecation ...` to show where the warning was created)
+[1] 
+[1] [OpenClaw stderr] 2026-03-28T22:42:33.374+08:00 Config warnings:\n- plugins.entries.mcp-bridge: plugin mcp-bridge: plugin id mismatch (manifest uses "mcp-bridge", entry hints "openclaw-mcp-bridge")
+[1] - plugins.entries.nim: plugin not found: nim (stale config entry ignored; remove it from plugins config)
+[1] 
+[1] [OpenClaw] waitForGatewayReady: poll #5, elapsed=2447ms, progress=11%
+[1] [SkillServices] Web Search Bridge Server started (PID: 49360)
+[1] [Main] initApp: skill services started
+[1] [Main] System proxy disabled (direct mode).
+[1] [Main] initApp: creating window
+[1] [Main] initApp: window created
+[1] [IMGatewayManager] Cowork handler created
+[1] [IMGatewayManager] Starting OpenClaw platforms in batch: feishu, weixin
+[1] [OpenClawConfigSync] sync() managedConfig key fields: {
+[1]   providers: {
+[1]     lobster: {
+[1]       baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+[1]       api: 'openai-completions',
+[1]       apiKey: '${LOBSTER_APIKEY_GEMINI}',
+[1]       auth: 'api-key',
+[1]       models: [Array]
+[1]     }
+[1]   },
+[1]   primaryModel: { primary: 'lobster/gemini-3-flash-preview' }
+[1] }
+[1] [ChannelSync] connectGatewayIfNeeded: no gateway client, initializing...
+[1] [ChannelSync] ensureGatewayClientReady: starting engine gateway...
+[1] [OpenClaw] startGateway: already in progress, reusing existing promise
+[1] [OpenClaw] health probe details: tcp=unreachable, http://127.0.0.1:18789/health → fetch failed, http://127.0.0.1:18789/healthz → fetch failed, http://127.0.0.1:18789/ready → fetch failed, http://127.0.0.1:18789/ → fetch failed
+[1] [OpenClaw] waitForGatewayReady: poll #10, elapsed=5503ms, progress=11%
+[1] [api:fetch] GET https://api-overmind.youdao.com/openapi/get/luna/hardware/lobsterai/prod/update
+[1] [api:fetch] GET https://api-overmind.youdao.com/openapi/get/luna/hardware/lobsterai/prod/update -> 200  {"data":{"value":{"date":"2026-3-26","windowsX64":{"url":"https://ydschool-video.nosdn.127.net/1774535049422LobsterAI+Setup+2026.3.26.exe"},"macIntel":{"url":"https://ydschool-video.nosdn.127.net/1774535552489LobsterAI-2026.3.26.dmg"},"macArm":{"url":"https://ydschool-video.nosdn.127.net/1774535683448LobsterAI-2026.3.26-arm64.dmg"},"changeLog":{"ch":{"title":"优化体验，修复问题","content":["多 Agent 支持","修复若干 bug 以提升系统稳定性"]},"en":{"title":"Experience Optimization and Bug Fixes","content":["Multi-Agent Support","Fixed several bugs to improve stability"]}},"version":"2026.3.26"}},"code":0,"msg":"OK"}
+[1] [OpenClaw stderr] 2026-03-28T22:42:38.155+08:00 Config warnings:\n- plugins.entries.mcp-bridge: plugin mcp-bridge: plugin id mismatch (manifest uses "mcp-bridge", entry hints "openclaw-mcp-bridge")
+[1] - plugins.entries.nim: plugin not found: nim (stale config entry ignored; remove it from plugins config)
+[1] 
+[1] [OpenClaw] waitForGatewayReady: poll #15, elapsed=8538ms, progress=12%
+[1] [OpenClaw] health probe details: tcp=unreachable, http://127.0.0.1:18789/health → fetch failed, http://127.0.0.1:18789/healthz → fetch failed, http://127.0.0.1:18789/ready → fetch failed, http://127.0.0.1:18789/ → fetch failed
+[1] [OpenClaw] waitForGatewayReady: poll #20, elapsed=11577ms, progress=13%
+[1] [OpenClaw stdout] 2026-03-28T22:42:43.686+08:00 Registered plugin command: /pair (plugin: device-pair)
+[1] 
+[1] [OpenClaw] waitForGatewayReady: poll #25, elapsed=14614ms, progress=14%
+[1] [OpenClaw] health probe details: tcp=unreachable, http://127.0.0.1:18789/health → fetch failed, http://127.0.0.1:18789/healthz → fetch failed, http://127.0.0.1:18789/ready → fetch failed, http://127.0.0.1:18789/ → fetch failed
+[1] [OpenClaw] waitForGatewayReady: poll #30, elapsed=17644ms, progress=15%
+[1] [OpenClaw] waitForGatewayReady: poll #35, elapsed=20677ms, progress=16%
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.958+08:00 [gateway] feishu_get_user: Registered feishu_get_user tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.959+08:00 [gateway] feishu_search_user: Registered feishu_search_user tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.961+08:00 [gateway] feishu_chat: Registered feishu_chat tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.962+08:00 [gateway] feishu_chat_members: Registered feishu_chat_members tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.963+08:00 [gateway] feishu_chat: Registered feishu_chat, feishu_chat_members
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.965+08:00 [gateway] feishu_im_user_message: Registered feishu_im_user_message tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.967+08:00 [gateway] feishu_im_user_fetch_resource: Registered feishu_im_user_fetch_resource tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.969+08:00 [gateway] feishu_im: Registered feishu_im_user_message, feishu_im_user_fetch_resource, feishu_im_user_get_messages, feishu_im_user_get_thread_messages, feishu_im_user_search_messages
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.972+08:00 [gateway] feishu_calendar_calendar: Registered feishu_calendar_calendar tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.974+08:00 [gateway] feishu_calendar_event: Registered feishu_calendar_event tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.976+08:00 [gateway] feishu_calendar_event_attendee: Registered feishu_calendar_event_attendee tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.978+08:00 [gateway] feishu_calendar_freebusy: Registered feishu_calendar_freebusy tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.980+08:00 [gateway] feishu_task_task: Registered feishu_task_task tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.981+08:00 [gateway] feishu_task_tasklist: Registered feishu_task_tasklist tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.984+08:00 [gateway] feishu_task_comment: Registered feishu_task_comment tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.985+08:00 [gateway] feishu_task_subtask: Registered feishu_task_subtask tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.987+08:00 [gateway] feishu_bitable_app: Registered feishu_bitable_app tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.988+08:00 [gateway] feishu_bitable_app_table: Registered feishu_bitable_app_table tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:52.990+08:00 [gateway] feishu_bitable_app_table_record: Registered feishu_bitable_app_table_record tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.002+08:00 [gateway] feishu_bitable_app_table_field: Registered feishu_bitable_app_table_field tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.003+08:00 [gateway] feishu_bitable_app_table_view: Registered feishu_bitable_app_table_view tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.005+08:00 [gateway] feishu_search_doc_wiki: Registered feishu_search_doc_wiki tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.006+08:00 [gateway] feishu_search: Registered feishu_search_doc_wiki
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.008+08:00 [gateway] feishu_drive_file: Registered feishu_drive_file tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.010+08:00 [gateway] feishu_doc_comments: Registered feishu_doc_comments tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.012+08:00 [gateway] feishu_doc_media: Registered feishu_doc_media tool (insert, download)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.013+08:00 [gateway] feishu_drive: Registered feishu_drive_file, feishu_doc_comments, feishu_doc_media
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.015+08:00 [gateway] feishu_wiki_space: Registered feishu_wiki_space tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.017+08:00 [gateway] feishu_wiki_space_node: Registered feishu_wiki_space_node tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.019+08:00 [gateway] feishu_wiki: Registered feishu_wiki_space, feishu_wiki_space_node
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.020+08:00 [gateway] feishu_sheet: Registered feishu_sheet tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.022+08:00 [gateway] feishu_sheets: Registered feishu_sheet tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.024+08:00 [gateway] feishu_im_bot_image: Registered feishu_im_bot_image tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.026+08:00 [gateway] feishu_im: Registered feishu_im_bot_image
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.027+08:00 [gateway] ✅ Registered all OAPI tools (calendar, task, bitable, mail, search, drive, wiki, sheets, okr, im)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.029+08:00 [gateway] feishu_doc: Registered feishu_fetch_doc, feishu_create_doc, feishu_update_doc
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.031+08:00 [gateway] feishu_oauth: Registered feishu_oauth tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.033+08:00 [gateway] feishu_oauth_batch_auth: Registered feishu_oauth_batch_auth tool
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.034+08:00 Registered plugin command: /feishu_diagnose (plugin: feishu-openclaw-plugin)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.036+08:00 Registered plugin command: /feishu_doctor (plugin: feishu-openclaw-plugin)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.038+08:00 Registered plugin command: /feishu_auth (plugin: feishu-openclaw-plugin)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.039+08:00 Registered plugin command: /feishu (plugin: feishu-openclaw-plugin)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.064+08:00 [gateway] [mcp-bridge] skipped registration because callbackUrl/secret/tools are incomplete.
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.911+08:00 Registered plugin command: /phone (plugin: phone-control)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.923+08:00 Registered plugin command: /voice (plugin: talk-voice)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.925+08:00 [gateway] [plugins] plugin id mismatch (manifest uses "mcp-bridge", entry hints "openclaw-mcp-bridge") (plugin=mcp-bridge, source=D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\mcp-bridge\index.ts)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.926+08:00 [gateway] [plugins] plugin id mismatch (config uses "feishu-openclaw-plugin", export uses "feishu") (plugin=feishu-openclaw-plugin, source=D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\feishu-openclaw-plugin\index.js)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.953+08:00 [canvas] host mounted at http://127.0.0.1:18789/__openclaw__/canvas/ (root C:\Users\jielu\AppData\Roaming\LobsterAI\openclaw\state\canvas)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:53.975+08:00 bonjour: starting (hostname=openclaw, instance="LU-LEGION (OpenClaw)", gatewayPort=18789, minimal=true)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:54.063+08:00 [heartbeat] started
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:54.066+08:00 [health-monitor] started (interval: 300s, startup-grace: 60s, channel-connect-grace: 120s)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:54.070+08:00 [gateway] agent model: lobster/gemini-3-flash-preview
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:54.072+08:00 [gateway] listening on ws://127.0.0.1:18789, ws://[::1]:18789 (PID 29800)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:54.075+08:00 [gateway] log file: \tmp\openclaw\openclaw-2026-03-28.log
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:54.090+08:00 [info]: [ 'client ready' ]
+[1] 
+[1] [OpenClaw] waitForGatewayReady: gateway healthy after 23122ms (39 polls)
+[1] [OpenClaw] startGateway: waitForGatewayReady returned (23249ms), ready=true
+[1] [OpenClaw] startGateway: gateway is running, total startup time: 23250ms
+[1] [ChannelSync] ensureGatewayClientReady: engine phase= running message= OpenClaw gateway is running on loopback:18789.
+[1] [ChannelSync] ensureGatewayClientReady: connection info — url= ✓ token= ✓ version= 2026.3.2 clientEntryPath= ✓
+[1] [ChannelSync] ensureGatewayClientReady: needsNewClient= true hasExistingClient= false
+[1] [ChannelSync] ensureGatewayClientReady: creating gateway client, url= ws://127.0.0.1:18789
+[1] [ChannelSync] ensureGatewayClientReady: createGatewayClient returned, waiting for handshake...
+[1] [OpenClaw stdout] 2026-03-28T22:42:54.222+08:00 [browser/server] Browser control listening on http://127.0.0.1:18791/ (auth=token)
+[1] 2026-03-28T22:42:54.254+08:00 [feishu] starting feishu[default] (mode: websocket)
+[1] 2026-03-28T22:42:54.265+08:00 [feishu] feishu[default]: message dedup enabled (ttl=43200000ms, max=5000)
+[1] 2026-03-28T22:42:54.267+08:00 [feishu] feishu[default]: starting WebSocket connection...
+[1] 2026-03-28T22:42:54.271+08:00 [openclaw-weixin] [43c9dd0802a9-im-bot] starting weixin provider (https://ilinkai.weixin.qq.com)
+[1] 2026-03-28T22:42:54.272+08:00 [openclaw-weixin] [43c9dd0802a9-im-bot] weixin logs: \tmp\openclaw\openclaw-2026-03-28.log
+[1] 2026-03-28T22:42:54.274+08:00 [openclaw-weixin] weixin monitor started (https://ilinkai.weixin.qq.com, account=43c9dd0802a9-im-bot)
+[1] 2026-03-28T22:42:54.283+08:00 [openclaw-weixin] [weixin] resuming from previous sync buf (104 bytes)
+[1] 2026-03-28T22:42:54.296+08:00 [error]: [
+[1]   AxiosError: Request failed with status code 400
+[1]       at settle (D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\feishu-openclaw-plugin\node_modules\axios\dist\node\axios.cjs:2304:7)
+[1]       at IncomingMessage.handleStreamEnd (D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\feishu-openclaw-plugin\node_modules\axios\dist\node\axios.cjs:3772:13)
+[1]       at IncomingMessage.emit (node:events:520:35)
+[1]       at endReadableNT (node:internal/streams/readable:1701:12)
+[1]       at processTicksAndRejections (node:internal/process/task_queues:89:21)
+[1]       at Axios.request (D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\feishu-openclaw-plugin\node_modules\axios\dist\node\axios.cjs:5110:41)
+[1]       at processTicksAndRejections (node:internal/process/task_queues:103:5) {
+[1]     isAxiosError: true,
+[1]     code: 'ERR_BAD_REQUEST',
+[1]     config: {
+[1]       transitional: [Object],
+[1]       adapter: [Array],
+[1]       transformRequest: [Array],
+[1]       transformResponse: [Array],
+[1]       timeout: 0,
+[1]       xsrfCookieName: 'XSRF-TOKEN',
+[1]       xsrfHeaderName: 'X-XSRF-TOKEN',
+[1]       maxContentLength: -1,
+[1]       maxBodyLength: -1,
+[1]       env: [Object],
+[1]       validateStatus: [Function: validateStatus],
+[1]       headers: [Object [AxiosHeaders]],
+[1]       method: 'post',
+[1]       url: 'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
+[1]       data: '{"app_id":"cli_a926b8805378dcb6","app_secret":"Dzc9zsjP2yHxqqe33nHK8bEWuyvj3Xuw"}',
+[1]       allowAbsoluteUrls: true
+[1]     },
+[1]     request: ClientRequest {
+[1]       _events: [Object: null prototype],
+[1]       _eventsCount: 7,
+[1]       _maxListeners: undefined,
+[1]       outputData: [],
+[1]       outputSize: 0,
+[1]       writable: true,
+[1]       destroyed: true,
+[1]       _last: false,
+[1]       chunkedEncoding: false,
+[1]       shouldKeepAlive: true,
+[1]       maxRequestsOnConnectionReached: false,
+[1]       _defaultKeepAlive: true,
+[1]       useChunkedEncodingByDefault: true,
+[1]       sendDate: false,
+[1]       _removedConnection: false,
+[1]       _removedContLen: false,
+[1]       _removedTE: false,
+[1]       strictContentLength: false,
+[1]       _contentLength: 81,
+[1]       _hasBody: true,
+[1]       _trailer: '',
+[1]       finished: true,
+[1]       _headerSent: true,
+[1]       _closed: true,
+[1]       _header: 'POST https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal HTTP/1.1\r\n' +
+[1]         'Accept: application/json, text/plain, */*\r\n' +
+[1]         'Content-Type: application/json\r\n' +
+[1]         'User-Agent: oapi-node-sdk/1.0.0\r\n' +
+[1]         'Content-Length: 81\r\n' +
+[1]         'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+[1]         'host: open.feishu.cn\r\n' +
+[1]         'Connection: keep-alive\r\n' +
+[1]         '\r\n',
+[1]       _keepAliveTimeout: 0,
+[1]       _onPendingData: [Function: nop],
+[1]       agent: [Agent],
+[1]       socketPath: undefined,
+[1]       method: 'POST',
+[1]       maxHeaderSize: undefined,
+[1]       insecureHTTPParser: undefined,
+[1]       joinDuplicateHeaders: undefined,
+[1]       path: 'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
+[1]       _ended: true,
+[1]       res: [IncomingMessage],
+[1]       aborted: false,
+[1]       timeoutCb: null,
+[1]       upgradeOrConnect: false,
+[1]       parser: null,
+[1]       maxHeadersCount: null,
+[1]       reusedSocket: false,
+[1]       host: '127.0.0.1',
+[1]       protocol: 'http:',
+[1]       _redirectable: [Writable],
+[1]       Symbol(shapeMode): false,
+[1]       Symbol(kCapture): false,
+[1]       Symbol(kBytesWritten): 0,
+[1]       Symbol(kNeedDrain): false,
+[1]       Symbol(corked): 0,
+[1]       Symbol(kChunkedBuffer): [],
+[1]       Symbol(kChunkedLength): 0,
+[1]       Symbol(kSocket): [Socket],
+[1]       Symbol(kOutHeaders): [Object: null prototype],
+[1]       Symbol(errored): null,
+[1]       Symbol(kHighWaterMark): 16384,
+[1]       Symbol(kRejectNonStandardBodyWrites): false,
+[1]       Symbol(kUniqueHeaders): null
+[1]     },
+[1]     response: {
+[1]       status: 400,
+[1]       statusText: 'Bad Request',
+[1]       headers: [Object [AxiosHeaders]],
+[1]       config: [Object],
+[1]       request: [ClientRequest],
+[1]       data: '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">\r\n' +
+[1]         '<html>\r\n' +
+[1]         '<head><title>400 The plain HTTP request was sent to HTTPS port</title></head>\r\n' +
+[1]         '<body>\r\n' +
+[1]         '<h1>400 Bad Request</h1>\r\n' +
+[1]         '<p>The plain HTTP request was sent to HTTPS port.<hr/>Powered by Tengine</body>\r\n' +
+[1]         '</html>\r\n'
+[1]     },
+[1]     status: 400
+[1]   }
+[1] ]
+[1] 2026-03-28T22:42:54.359+08:00 [error]: [
+[1]   AxiosError: Request failed with status code 400
+[1]       at settle (D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\feishu-openclaw-plugin\node_modules\axios\dist\node\axios.cjs:2304:7)
+[1]       at IncomingMessage.handleStreamEnd (D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\feishu-openclaw-plugin\node_modules\axios\dist\node\axios.cjs:3772:13)
+[1]       at IncomingMessage.emit (node:events:520:35)
+[1]       at endReadableNT (node:internal/streams/readable:1701:12)
+[1]       at processTicksAndRejections (node:internal/process/task_queues:89:21)
+[1]       at Axios.request (D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\feishu-openclaw-plugin\node_modules\axios\dist\node\axios.cjs:5110:41)
+[1]       at processTicksAndRejections (node:internal/process/task_queues:103:5) {
+[1]     isAxiosError: true,
+[1]     code: 'ERR_BAD_REQUEST',
+[1]     config: {
+[1]       transitional: [Object],
+[1]       adapter: [Array],
+[1]       transformRequest: [Array],
+[1]       transformResponse: [Array],
+[1]       timeout: 0,
+[1]       xsrfCookieName: 'XSRF-TOKEN',
+[1]       xsrfHeaderName: 'X-XSRF-TOKEN',
+[1]       maxContentLength: -1,
+[1]       maxBodyLength: -1,
+[1]       env: [Object],
+[1]       validateStatus: [Function: validateStatus],
+[1]       headers: [Object [AxiosHeaders]],
+[1]       method: 'post',
+[1]       url: 'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
+[1]       data: '{"app_id":"cli_a926b8805378dcb6","app_secret":"Dzc9zsjP2yHxqqe33nHK8bEWuyvj3Xuw"}',
+[1]       allowAbsoluteUrls: true
+[1]     },
+[1]     request: ClientRequest {
+[1]       _events: [Object: null prototype],
+[1]       _eventsCount: 7,
+[1]       _maxListeners: undefined,
+[1]       outputData: [],
+[1]       outputSize: 0,
+[1]       writable: true,
+[1]       destroyed: true,
+[1]       _last: false,
+[1]       chunkedEncoding: false,
+[1]       shouldKeepAlive: true,
+[1]       maxRequestsOnConnectionReached: false,
+[1]       _defaultKeepAlive: true,
+[1]       useChunkedEncodingByDefault: true,
+[1]       sendDate: false,
+[1]       _removedConnection: false,
+[1]       _removedContLen: false,
+[1]       _removedTE: false,
+[1]       strictContentLength: false,
+[1]       _contentLength: 81,
+[1]       _hasBody: true,
+[1]       _trailer: '',
+[1]       finished: true,
+[1]       _headerSent: true,
+[1]       _closed: true,
+[1]       _header: 'POST https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal HTTP/1.1\r\n' +
+[1]         'Accept: application/json, text/plain, */*\r\n' +
+[1]         'Content-Type: application/json\r\n' +
+[1]         'User-Agent: oapi-node-sdk/1.0.0\r\n' +
+[1]         'Content-Length: 81\r\n' +
+[1]         'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+[1]         'host: open.feishu.cn\r\n' +
+[1]         'Connection: keep-alive\r\n' +
+[1]         '\r\n',
+[1]       _keepAliveTimeout: 0,
+[1]       _onPendingData: [Function: nop],
+[1]       agent: [Agent],
+[1]       socketPath: undefined,
+[1]       method: 'POST',
+[1]       maxHeaderSize: undefined,
+[1]       insecureHTTPParser: undefined,
+[1]       joinDuplicateHeaders: undefined,
+[1]       path: 'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
+[1]       _ended: true,
+[1]       res: [IncomingMessage],
+[1]       aborted: false,
+[1]       timeoutCb: null,
+[1]       upgradeOrConnect: false,
+[1]       parser: null,
+[1]       maxHeadersCount: null,
+[1]       reusedSocket: false,
+[1]       host: '127.0.0.1',
+[1]       protocol: 'http:',
+[1]       _redirectable: [Writable],
+[1]       Symbol(shapeMode): false,
+[1]       Symbol(kCapture): false,
+[1]       Symbol(kBytesWritten): 0,
+[1]       Symbol(kNeedDrain): false,
+[1]       Symbol(corked): 0,
+[1]       Symbol(kChunkedBuffer): [],
+[1]       Symbol(kChunkedLength): 0,
+[1]       Symbol(kSocket): [Socket],
+[1]       Symbol(kOutHeaders): [Object: null prototype],
+[1]       Symbol(errored): null,
+[1]       Symbol(kHighWaterMark): 16384,
+[1]       Symbol(kRejectNonStandardBodyWrites): false,
+[1]       Symbol(kUniqueHeaders): null
+[1]     },
+[1]     response: {
+[1]       status: 400,
+[1]       statusText: 'Bad Request',
+[1]       headers: [Object [AxiosHeaders]],
+[1]       config: [Object],
+[1]       request: [ClientRequest],
+[1]       data: '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">\r\n' +
+[1]         '<html>\r\n' +
+[1]         '<head><title>400 The plain HTTP request was sent to HTTPS port</title></head>\r\n' +
+[1]         '<body>\r\n' +
+[1]         '<h1>400 Bad Request</h1>\r\n' +
+[1]         '<p>The plain HTTP request was sent to HTTPS port.<hr/>Powered by Tengine</body>\r\n' +
+[1]         '</html>\r\n'
+[1]     },
+[1]     status: 400
+[1]   }
+[1] ]
+[1] 2026-03-28T22:42:54.360+08:00 [info]: [ 'event-dispatch is ready' ]
+[1] 2026-03-28T22:42:54.362+08:00 [info]: [
+[1]   '[ws]',
+[1]   'receive events or callbacks through persistent connection only available in self-build & Feishu app, Configured in:\n' +
+[1]     '        Developer Console(开发者后台) \n' +
+[1]     '          ->\n' +
+[1]     '        Events and Callbacks(事件与回调)\n' +
+[1]     '          -> \n' +
+[1]     '        Mode of event/callback subscription(订阅方式)\n' +
+[1]     '          -> \n' +
+[1]     '        Receive events/callbacks through persistent connection(使用 长连接 接收事件/回调)'
+[1] ]
+[1] 2026-03-28T22:42:54.366+08:00 [error]: [ '[ws]', 'read ECONNRESET' ]
+[1] 2026-03-28T22:42:54.367+08:00 [error]: [ '[ws]', 'connect failed' ]
+[1] 2026-03-28T22:42:54.368+08:00 [info]: [ '[ws]', 'reconnect' ]
+[1] 2026-03-28T22:42:54.369+08:00 [info]: [ '[ws]', 'ws client ready' ]
+[1] 2026-03-28T22:42:54.889+08:00 [openclaw-weixin] [weixin] config cached for o9cq803OgMJp2VFsXP8rxgTPedDg@im.wechat
+[1] 2026-03-28T22:42:54.893+08:00 [routing] resolveAgentRoute: channel=openclaw-weixin accountId=43c9dd0802a9-im-bot peer=direct:o9cq803OgMJp2VFsXP8rxgTPedDg@im.wechat guildId=none teamId=none bindings=0
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:55.039+08:00 [ws] ← open remoteAddr=127.0.0.1 conn=08933fc5...92f8
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:55.051+08:00 [ws] ← connect client=gateway-client clientDisplayName=LobsterAI version=2026.3.26 mode=backend clientId=gateway-client platform=win32 auth=token
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:55.053+08:00 [ws] → hello-ok methods=96 events=19 presence=2 stateVersion=2
+[1] 
+[1] [ChannelSync] GatewayClient: onHelloOk — handshake succeeded
+[1] [TickWatchdog] started
+[1] [ChannelSync] ensureGatewayClientReady: gateway client created and ready
+[1] [ChannelSync] connectGatewayIfNeeded: gateway client ready, starting channel polling
+[1] [ChannelSync] startChannelPolling: starting periodic channel session discovery
+[1] [ChannelSessionSync] parsed: platform= weixin conversationId= direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat
+[1] [ChannelSessionSync] existing mapping: coworkSessionId=d7e2aea4-f079-4310-9edf-d1cdd53c0b30 agentId=main
+[1] [ChannelSessionSync] existing cowork session found, reusing: d7e2aea4-f079-4310-9edf-d1cdd53c0b30
+[1] [ChannelSessionSync] parse failed: not a recognized channel key: agent:main:main
+[1] [ChannelSync] discovered 2 channel sessions, notified 1 windows
+[1] [OpenClaw stdout] 2026-03-28T22:42:55.063+08:00 [ws] ⇄ res ✓ sessions.list 2ms id=f63725b6...e5f6
+[1] 2026-03-28T22:42:55.066+08:00 [ws] ⇄ res ✓ cron.list 1ms id=4c0b866c...6e56
+[1] 2026-03-28T22:42:55.068+08:00 [ws] ⇄ res ✓ cron.list 3ms id=4fe3ab80...daf1
+[1] 2026-03-28T22:42:55.077+08:00 [error]: [
+[1]   AxiosError: Request failed with status code 400
+[1]       at settle (D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\feishu-openclaw-plugin\node_modules\axios\dist\node\axios.cjs:2304:7)
+[1]       at IncomingMessage.handleStreamEnd (D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\feishu-openclaw-plugin\node_modules\axios\dist\node\axios.cjs:3772:13)
+[1]       at IncomingMessage.emit (node:events:520:35)
+[1]       at endReadableNT (node:internal/streams/readable:1701:12)
+[1]       at processTicksAndRejections (node:internal/process/task_queues:89:21)
+[1]       at Axios.request (D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\feishu-openclaw-plugin\node_modules\axios\dist\node\axios.cjs:5110:41)
+[1]       at processTicksAndRejections (node:internal/process/task_queues:103:5) {
+[1]     isAxiosError: true,
+[1]     code: 'ERR_BAD_REQUEST',
+[1]     config: {
+[1]       transitional: [Object],
+[1]       adapter: [Array],
+[1]       transformRequest: [Array],
+[1]       transformResponse: [Array],
+[1]       timeout: 0,
+[1]       xsrfCookieName: 'XSRF-TOKEN',
+[1]       xsrfHeaderName: 'X-XSRF-TOKEN',
+[1]       maxContentLength: -1,
+[1]       maxBodyLength: -1,
+[1]       env: [Object],
+[1]       validateStatus: [Function: validateStatus],
+[1]       headers: [Object [AxiosHeaders]],
+[1]       method: 'post',
+[1]       url: 'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
+[1]       data: '{"app_id":"cli_a926b8805378dcb6","app_secret":"Dzc9zsjP2yHxqqe33nHK8bEWuyvj3Xuw"}',
+[1]       allowAbsoluteUrls: true
+[1]     },
+[1]     request: ClientRequest {
+[1]       _events: [Object: null prototype],
+[1]       _eventsCount: 7,
+[1]       _maxListeners: undefined,
+[1]       outputData: [],
+[1]       outputSize: 0,
+[1]       writable: true,
+[1]       destroyed: true,
+[1]       _last: false,
+[1]       chunkedEncoding: false,
+[1]       shouldKeepAlive: true,
+[1]       maxRequestsOnConnectionReached: false,
+[1]       _defaultKeepAlive: true,
+[1]       useChunkedEncodingByDefault: true,
+[1]       sendDate: false,
+[1]       _removedConnection: false,
+[1]       _removedContLen: false,
+[1]       _removedTE: false,
+[1]       strictContentLength: false,
+[1]       _contentLength: 81,
+[1]       _hasBody: true,
+[1]       _trailer: '',
+[1]       finished: true,
+[1]       _headerSent: true,
+[1]       _closed: true,
+[1]       _header: 'POST https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal HTTP/1.1\r\n' +
+[1]         'Accept: application/json, text/plain, */*\r\n' +
+[1]         'Content-Type: application/json\r\n' +
+[1]         'User-Agent: oapi-node-sdk/1.0.0\r\n' +
+[1]         'Content-Length: 81\r\n' +
+[1]         'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+[1]         'host: open.feishu.cn\r\n' +
+[1]         'Connection: keep-alive\r\n' +
+[1]         '\r\n',
+[1]       _keepAliveTimeout: 0,
+[1]       _onPendingData: [Function: nop],
+[1]       agent: [Agent],
+[1]       socketPath: undefined,
+[1]       method: 'POST',
+[1]       maxHeaderSize: undefined,
+[1]       insecureHTTPParser: undefined,
+[1]       joinDuplicateHeaders: undefined,
+[1]       path: 'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
+[1]       _ended: true,
+[1]       res: [IncomingMessage],
+[1]       aborted: false,
+[1]       timeoutCb: null,
+[1]       upgradeOrConnect: false,
+[1]       parser: null,
+[1]       maxHeadersCount: null,
+[1]       reusedSocket: false,
+[1]       host: '127.0.0.1',
+[1]       protocol: 'http:',
+[1]       _redirectable: [Writable],
+[1]       Symbol(shapeMode): false,
+[1]       Symbol(kCapture): false,
+[1]       Symbol(kBytesWritten): 0,
+[1]       Symbol(kNeedDrain): false,
+[1]       Symbol(corked): 0,
+[1]       Symbol(kChunkedBuffer): [],
+[1]       Symbol(kChunkedLength): 0,
+[1]       Symbol(kSocket): [Socket],
+[1]       Symbol(kOutHeaders): [Object: null prototype],
+[1]       Symbol(errored): null,
+[1]       Symbol(kHighWaterMark): 16384,
+[1]       Symbol(kRejectNonStandardBodyWrites): false,
+[1]       Symbol(kUniqueHeaders): null
+[1]     },
+[1]     response: {
+[1]       status: 400,
+[1]       statusText: 'Bad Request',
+[1]       headers: [Object [AxiosHeaders]],
+[1]       config: [Object],
+[1]       request: [ClientRequest],
+[1]       data: '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">\r\n' +
+[1]         '<html>\r\n' +
+[1]         '<head><title>400 The plain HTTP request was sent to HTTPS port</title></head>\r\n' +
+[1]         '<body>\r\n' +
+[1]         '<h1>400 Bad Request</h1>\r\n' +
+[1]         '<p>The plain HTTP request was sent to HTTPS port.<hr/>Powered by Tengine</body>\r\n' +
+[1]         '</html>\r\n'
+[1]     },
+[1]     status: 400
+[1]   }
+[1] ]
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:55.080+08:00 [ws] → event health seq=1 clients=1 presenceVersion=2 healthVersion=3
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:55.096+08:00 [ws] ⇄ res ✓ cron.list 0ms id=820fd531...3efd
+[1] 
+[1] [Reconcile] already in sync — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 entries: 2
+[1] [OpenClaw stdout] 2026-03-28T22:42:56.005+08:00 [ws] ⇄ res ✓ chat.history 923ms id=87581442...0350
+[1] 
+[1] [Reconcile] already in sync — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 entries: 2
+[1] [OpenClaw stdout] 2026-03-28T22:42:56.140+08:00 [ws] ⇄ res ✓ chat.history 3ms id=d183b072...21ce
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:56.193+08:00 memoryFlush check: sessionKey=agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat tokenCount=undefined contextWindow=200000 threshold=176000 isHeartbeat=false isCli=false memoryFlushWritable=true compactionCount=0 memoryFlushCompactionCount=undefined persistedPromptTokens=undefined persistedFresh=false promptTokensEst=41 transcriptPromptTokens=undefined transcriptOutputTokens=undefined projectedTokenCount=undefined transcriptBytes=2336 forceFlushTranscriptBytes=2097152 forceFlushByTranscriptSize=false
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:56.198+08:00 [diagnostic] lane enqueue: lane=session:agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat queueSize=1
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:56.200+08:00 [diagnostic] lane dequeue: lane=session:agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat waitMs=2 queueSize=0
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:56.202+08:00 [diagnostic] lane enqueue: lane=main queueSize=1
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:56.204+08:00 [diagnostic] lane dequeue: lane=main waitMs=2 queueSize=0
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:57.259+08:00 [agent/embedded] embedded run start: runId=75b1eefa-543a-402f-a10e-1c1080f65275 sessionId=9796483f-4268-4067-8e31-e2d3a3268841 provider=lobster model=gemini-3-flash-preview thinking=off messageChannel=openclaw-weixin
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:57.647+08:00 [diagnostic] session state: sessionId=9796483f-4268-4067-8e31-e2d3a3268841 sessionKey=agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat prev=idle new=processing reason="run_started" queueDepth=0
+[1] 
+[1] [OpenClaw stderr] 2026-03-28T22:42:57.663+08:00 [compaction-safeguard] Compaction safeguard: cancelling compaction with no real conversation messages to summarize.
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:57.649+08:00 [diagnostic] run registered: sessionId=9796483f-4268-4067-8e31-e2d3a3268841 totalActive=1
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:57.650+08:00 [agent/embedded] embedded run prompt start: runId=75b1eefa-543a-402f-a10e-1c1080f65275 sessionId=9796483f-4268-4067-8e31-e2d3a3268841
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:57.653+08:00 [agent/embedded] [context-diag] pre-prompt: sessionKey=agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat messages=4 roleCounts=assistant:2,user:2 historyTextChars=322 maxMessageTextChars=161 historyImageBlocks=0 systemPromptChars=42774 promptChars=161 promptImages=0 provider=lobster/gemini-3-flash-preview sessionFile=C:\Users\jielu\AppData\Roaming\LobsterAI\openclaw\state\agents\main\sessions\9796483f-4268-4067-8e31-e2d3a3268841.jsonl
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:57.657+08:00 [agent/embedded] embedded run compaction start: runId=75b1eefa-543a-402f-a10e-1c1080f65275
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:57.659+08:00 [ws] → event agent seq=2 clients=1 run=75b1eefa...5275 agent=main session=openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat stream=compaction aseq=1
+[1] 
+[1] [Debug:handleAgentEvent] re-creating ActiveTurn for follow-up turn, sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30
+[1] [Debug:ensureActiveTurn] creating turn — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 sessionKey: agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat runId: 75b1eefa-543a-402f-a10e-1c1080f65275 isChannel: true pendingUserSync: true
+[1] [Debug:prefetch] start — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 sessionKey: agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat
+[1] [Debug:handleAgentEvent] buffering agent event (pendingUserSync), sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 buffered: 1
+[1] [Debug:handleAgentEvent] buffering agent event (pendingUserSync), sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 buffered: 2
+[1] [Debug:handleAgentEvent] buffering agent event (pendingUserSync), sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 buffered: 3
+[1] [OpenClaw stdout] 2026-03-28T22:42:57.665+08:00 [ws] → event agent seq=3 clients=1 run=75b1eefa...5275 agent=main session=openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat stream=compaction aseq=2
+[1] 2026-03-28T22:42:57.668+08:00 [agent/embedded] embedded run agent start: runId=75b1eefa-543a-402f-a10e-1c1080f65275
+[1] 2026-03-28T22:42:57.670+08:00 [ws] → event agent seq=4 clients=1 run=75b1eefa...5275 agent=main session=openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat stream=lifecycle aseq=3 phase=start
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:57.679+08:00 [error]: [ '[ws]', 'Request failed with status code 400' ]
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:57.680+08:00 [info]: [ 'ws', 'unable to connect to the server after trying 1 times")' ]
+[1] 
+[1] [Debug:prefetch] chat.history returned 5 messages (attempt 0 )
+[1] [Debug:prefetch] synced user messages: 0 (before: 2 after: 2 )
+[1] [Debug:prefetch] no new user messages but have buffered events, retrying after 500ms...
+[1] [OpenClaw stdout] 2026-03-28T22:42:57.692+08:00 [ws] ⇄ res ✓ chat.history 10ms id=2f24ec64...af7d
+[1] 
+[1] [Debug:prefetch] chat.history returned 5 messages (attempt 1 )
+[1] [Debug:prefetch] synced user messages: 0 (before: 2 after: 2 )
+[1] [Debug:prefetch] replaying buffered events — chat: 0 agent: 3
+[1] [Debug:prefetch] replay complete, sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30
+[1] [OpenClaw stdout] 2026-03-28T22:42:58.207+08:00 [ws] ⇄ res ✓ chat.history 2ms id=358d6471...437e
+[1] 
+[1] [OpenClaw stderr] 2026-03-28T22:42:59.053+08:00 [agent/embedded] embedded run agent end: runId=75b1eefa-543a-402f-a10e-1c1080f65275 isError=true error=400 status code (no body)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:59.055+08:00 [ws] → event agent seq=5 clients=1 run=75b1eefa...5275 agent=main session=openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat stream=lifecycle aseq=4 phase=error error=400 status code (no body)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:59.057+08:00 [ws] → event chat seq=6 clients=1
+[1] 
+[1] [OpenClawRuntime] handleChatError payload: {"runId":"75b1eefa-543a-402f-a10e-1c1080f65275","sessionKey":"agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat","seq":4,"state":"error","errorMessage":"400 status code (no body)"}
+[1] [IMCoworkHandler:handleMessage] sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 tracked: true messageType: system
+[1] [IMCoworkHandler:handleMessage] accumulator exists: true backgroundDelivery: true
+[1] [CoworkForwarder] forwarding message: sessionId= d7e2aea4-f079-4310-9edf-d1cdd53c0b30 type= system windowCount= 1
+[1] [Debug:handleAgentEvent] no sessionId, dropping event. runId: 75b1eefa-543a-402f-a10e-1c1080f65275 sessionKey: 
+[1] [Debug:handleAgentEvent] no sessionId, dropping event. runId: 75b1eefa-543a-402f-a10e-1c1080f65275 sessionKey: 
+[1] [Debug:handleAgentEvent] no sessionId, dropping event. runId: 75b1eefa-543a-402f-a10e-1c1080f65275 sessionKey: 
+[1] [OpenClaw stdout] 2026-03-28T22:42:59.059+08:00 [agent/embedded] embedded run compaction start: runId=75b1eefa-543a-402f-a10e-1c1080f65275
+[1] 2026-03-28T22:42:59.061+08:00 [ws] → event agent seq=7 clients=1 run=75b1eefa...5275 stream=error reason=seq gap
+[1] 2026-03-28T22:42:59.063+08:00 [ws] → event agent seq=8 clients=1 run=75b1eefa...5275 stream=compaction aseq=5
+[1] 2026-03-28T22:42:59.066+08:00 [agent/embedded] embedded run prompt end: runId=75b1eefa-543a-402f-a10e-1c1080f65275 sessionId=9796483f-4268-4067-8e31-e2d3a3268841 durationMs=1416
+[1] 2026-03-28T22:42:59.069+08:00 [ws] → event agent seq=9 clients=1 run=75b1eefa...5275 stream=compaction aseq=6
+[1] 2026-03-28T22:42:59.071+08:00 [diagnostic] session state: sessionId=9796483f-4268-4067-8e31-e2d3a3268841 sessionKey=agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat prev=processing new=idle reason="run_completed" queueDepth=0
+[1] 2026-03-28T22:42:59.073+08:00 [diagnostic] run cleared: sessionId=9796483f-4268-4067-8e31-e2d3a3268841 totalActive=0
+[1] 2026-03-28T22:42:59.080+08:00 [agent/embedded] embedded run done: runId=75b1eefa-543a-402f-a10e-1c1080f65275 sessionId=9796483f-4268-4067-8e31-e2d3a3268841 durationMs=2873 aborted=false
+[1] 2026-03-28T22:42:59.082+08:00 [diagnostic] lane task done: lane=main durationMs=2876 active=0 queued=0
+[1] 2026-03-28T22:42:59.083+08:00 [diagnostic] lane task done: lane=session:agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat durationMs=2882 active=0 queued=0
+[1] 
+[1] [OpenClaw stderr] 2026-03-28T22:42:59.065+08:00 [compaction-safeguard] Compaction safeguard: cancelling compaction with no real conversation messages to summarize.
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:59.094+08:00 [ws] ⇄ res ✓ chat.history 3ms id=fa1e20b9...58bd
+[1] 
+[1] [Reconcile] replacing messages — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 local: 2 → authoritative: 3
+[1] [OpenClaw stdout] 2026-03-28T22:42:59.456+08:00 [routing] resolveAgentRoute: channel=openclaw-weixin accountId=43c9dd0802a9-im-bot peer=direct:o9cq803OgMJp2VFsXP8rxgTPedDg@im.wechat guildId=none teamId=none bindings=0
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:59.642+08:00 memoryFlush check: sessionKey=agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat tokenCount=undefined contextWindow=200000 threshold=176000 isHeartbeat=false isCli=false memoryFlushWritable=true compactionCount=1 memoryFlushCompactionCount=undefined persistedPromptTokens=undefined persistedFresh=false promptTokensEst=40 transcriptPromptTokens=undefined transcriptOutputTokens=undefined projectedTokenCount=undefined transcriptBytes=3159 forceFlushTranscriptBytes=2097152 forceFlushByTranscriptSize=false
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:59.644+08:00 [diagnostic] lane enqueue: lane=session:agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat queueSize=1
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:59.646+08:00 [diagnostic] lane dequeue: lane=session:agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat waitMs=1 queueSize=0
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:59.648+08:00 [diagnostic] lane enqueue: lane=main queueSize=1
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:42:59.650+08:00 [diagnostic] lane dequeue: lane=main waitMs=2 queueSize=0
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:00.700+08:00 [agent/embedded] embedded run start: runId=10d6a94b-77c1-4495-b3e9-191f98c035e8 sessionId=9796483f-4268-4067-8e31-e2d3a3268841 provider=lobster model=gemini-3-flash-preview thinking=off messageChannel=openclaw-weixin
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:00.712+08:00 [diagnostic] session state: sessionId=9796483f-4268-4067-8e31-e2d3a3268841 sessionKey=agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat prev=idle new=processing reason="run_started" queueDepth=0
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:00.713+08:00 [diagnostic] run registered: sessionId=9796483f-4268-4067-8e31-e2d3a3268841 totalActive=1
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:00.715+08:00 [agent/embedded] embedded run prompt start: runId=10d6a94b-77c1-4495-b3e9-191f98c035e8 sessionId=9796483f-4268-4067-8e31-e2d3a3268841
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:00.718+08:00 [agent/embedded] [context-diag] pre-prompt: sessionKey=agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat messages=6 roleCounts=assistant:3,user:3 historyTextChars=483 maxMessageTextChars=161 historyImageBlocks=0 systemPromptChars=42774 promptChars=160 promptImages=0 provider=lobster/gemini-3-flash-preview sessionFile=C:\Users\jielu\AppData\Roaming\LobsterAI\openclaw\state\agents\main\sessions\9796483f-4268-4067-8e31-e2d3a3268841.jsonl
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:00.719+08:00 [agent/embedded] embedded run compaction start: runId=10d6a94b-77c1-4495-b3e9-191f98c035e8
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:00.721+08:00 [ws] → event agent seq=10 clients=1 run=10d6a94b...35e8 agent=main session=openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat stream=compaction aseq=1
+[1] 
+[1] [Debug:handleAgentEvent] re-creating ActiveTurn for follow-up turn, sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30
+[1] [Debug:ensureActiveTurn] creating turn — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 sessionKey: agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat runId: 10d6a94b-77c1-4495-b3e9-191f98c035e8 isChannel: true pendingUserSync: true
+[1] [Debug:prefetch] start — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 sessionKey: agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat
+[1] [Debug:handleAgentEvent] buffering agent event (pendingUserSync), sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 buffered: 1
+[1] [Debug:handleAgentEvent] buffering agent event (pendingUserSync), sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 buffered: 2
+[1] [Debug:handleAgentEvent] buffering agent event (pendingUserSync), sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 buffered: 3
+[1] [OpenClaw stderr] 2026-03-28T22:43:00.723+08:00 [compaction-safeguard] Compaction safeguard: cancelling compaction with no real conversation messages to summarize.
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:00.724+08:00 [ws] → event agent seq=11 clients=1 run=10d6a94b...35e8 agent=main session=openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat stream=compaction aseq=2
+[1] 2026-03-28T22:43:00.726+08:00 [agent/embedded] embedded run agent start: runId=10d6a94b-77c1-4495-b3e9-191f98c035e8
+[1] 2026-03-28T22:43:00.728+08:00 [ws] → event agent seq=12 clients=1 run=10d6a94b...35e8 agent=main session=openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat stream=lifecycle aseq=3 phase=start
+[1] 
+[1] [Debug:prefetch] chat.history returned 7 messages (attempt 0 )
+[1] [IMCoworkHandler:handleMessage] sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 tracked: true messageType: user
+[1] [IMCoworkHandler:handleMessage] accumulator exists: true backgroundDelivery: true
+[1] [CoworkForwarder] forwarding message: sessionId= d7e2aea4-f079-4310-9edf-d1cdd53c0b30 type= user windowCount= 1
+[1] [Debug:prefetch] synced user messages: 1 (before: 3 after: 4 )
+[1] [Debug:prefetch] replaying buffered events — chat: 0 agent: 3
+[1] [Debug:prefetch] replay complete, sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30
+[1] [OpenClaw stdout] 2026-03-28T22:43:00.740+08:00 [ws] ⇄ res ✓ chat.history 6ms id=9ae9b338...9e2c
+[1] 
+[1] [OpenClaw stderr] 2026-03-28T22:43:01.140+08:00 [agent/embedded] embedded run agent end: runId=10d6a94b-77c1-4495-b3e9-191f98c035e8 isError=true error=400 status code (no body)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:01.142+08:00 [ws] → event agent seq=13 clients=1 run=10d6a94b...35e8 agent=main session=openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat stream=lifecycle aseq=4 phase=error error=400 status code (no body)
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:01.145+08:00 [ws] → event chat seq=14 clients=1
+[1] 
+[1] [OpenClawRuntime] handleChatError payload: {"runId":"10d6a94b-77c1-4495-b3e9-191f98c035e8","sessionKey":"agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat","seq":4,"state":"error","errorMessage":"400 status code (no body)"}
+[1] [IMCoworkHandler:handleMessage] sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 tracked: true messageType: system
+[1] [IMCoworkHandler:handleMessage] accumulator exists: true backgroundDelivery: true
+[1] [CoworkForwarder] forwarding message: sessionId= d7e2aea4-f079-4310-9edf-d1cdd53c0b30 type= system windowCount= 1
+[1] [Debug:handleAgentEvent] no sessionId, dropping event. runId: 10d6a94b-77c1-4495-b3e9-191f98c035e8 sessionKey: 
+[1] [Debug:handleAgentEvent] no sessionId, dropping event. runId: 10d6a94b-77c1-4495-b3e9-191f98c035e8 sessionKey: 
+[1] [Debug:handleAgentEvent] no sessionId, dropping event. runId: 10d6a94b-77c1-4495-b3e9-191f98c035e8 sessionKey: 
+[1] [OpenClaw stderr] 2026-03-28T22:43:01.158+08:00 [compaction-safeguard] Compaction safeguard: cancelling compaction with no real conversation messages to summarize.
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:01.149+08:00 [agent/embedded] embedded run compaction start: runId=10d6a94b-77c1-4495-b3e9-191f98c035e8
+[1] 2026-03-28T22:43:01.152+08:00 [ws] → event agent seq=15 clients=1 run=10d6a94b...35e8 stream=error reason=seq gap
+[1] 2026-03-28T22:43:01.155+08:00 [ws] → event agent seq=16 clients=1 run=10d6a94b...35e8 stream=compaction aseq=5
+[1] 2026-03-28T22:43:01.160+08:00 [agent/embedded] embedded run prompt end: runId=10d6a94b-77c1-4495-b3e9-191f98c035e8 sessionId=9796483f-4268-4067-8e31-e2d3a3268841 durationMs=444
+[1] 2026-03-28T22:43:01.163+08:00 [ws] → event agent seq=17 clients=1 run=10d6a94b...35e8 stream=compaction aseq=6
+[1] 2026-03-28T22:43:01.166+08:00 [diagnostic] session state: sessionId=9796483f-4268-4067-8e31-e2d3a3268841 sessionKey=agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat prev=processing new=idle reason="run_completed" queueDepth=0
+[1] 2026-03-28T22:43:01.168+08:00 [diagnostic] run cleared: sessionId=9796483f-4268-4067-8e31-e2d3a3268841 totalActive=0
+[1] 2026-03-28T22:43:01.177+08:00 [agent/embedded] embedded run done: runId=10d6a94b-77c1-4495-b3e9-191f98c035e8 sessionId=9796483f-4268-4067-8e31-e2d3a3268841 durationMs=1524 aborted=false
+[1] 2026-03-28T22:43:01.179+08:00 [diagnostic] lane task done: lane=main durationMs=1527 active=0 queued=0
+[1] 2026-03-28T22:43:01.181+08:00 [diagnostic] lane task done: lane=session:agent:main:openclaw-weixin:direct:o9cq803ogmjp2vfsxp8rxgtpeddg@im.wechat durationMs=1533 active=0 queued=0
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:01.187+08:00 [ws] ⇄ res ✓ chat.history 4ms id=24faf200...0a2e
+[1] 
+[1] [Reconcile] already in sync — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 entries: 4
+[1] [OpenClaw stdout] 2026-03-28T22:43:05.067+08:00 [ws] ⇄ res ✓ sessions.list 1ms id=941f4731...b87e
+[1] 
+[1] [Reconcile] already in sync — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 entries: 4
+[1] [OpenClaw stdout] 2026-03-28T22:43:05.071+08:00 [ws] ⇄ res ✓ chat.history 3ms id=61620141...553b
+[1] 
+[1] [ChannelSync] ensureGatewayClientReady: starting engine gateway...
+[1] [OpenClaw] synced local extensions: mcp-bridge
+[1] [OpenClaw] startGateway: ensureReady done (4ms), phase=running
+[1] [OpenClaw] startGateway: existing process health check (24ms), healthy=true
+[1] [ChannelSync] ensureGatewayClientReady: engine phase= running message= OpenClaw gateway is running on loopback:18789.
+[1] [ChannelSync] ensureGatewayClientReady: connection info — url= ✓ token= ✓ version= 2026.3.2 clientEntryPath= ✓
+[1] [ChannelSync] ensureGatewayClientReady: needsNewClient= false hasExistingClient= true
+[1] [OpenClaw stdout] 2026-03-28T22:43:07.658+08:00 [ws] ⇄ res ✓ cron.list 0ms id=3fefb9c1...3cb3
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:15.082+08:00 [ws] ⇄ res ✓ sessions.list 2ms id=c979e54f...1812
+[1] 
+[1] [Reconcile] already in sync — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 entries: 4
+[1] [OpenClaw stdout] 2026-03-28T22:43:15.088+08:00 [ws] ⇄ res ✓ chat.history 4ms id=1636ee50...ab8d
+[1] 
+[1] [ChannelSync] ensureGatewayClientReady: starting engine gateway...
+[1] [OpenClaw] synced local extensions: mcp-bridge
+[1] [OpenClaw] startGateway: ensureReady done (4ms), phase=running
+[1] [OpenClaw] startGateway: existing process health check (17ms), healthy=true
+[1] [ChannelSync] ensureGatewayClientReady: engine phase= running message= OpenClaw gateway is running on loopback:18789.
+[1] [ChannelSync] ensureGatewayClientReady: connection info — url= ✓ token= ✓ version= 2026.3.2 clientEntryPath= ✓
+[1] [ChannelSync] ensureGatewayClientReady: needsNewClient= false hasExistingClient= true
+[1] [OpenClaw stdout] 2026-03-28T22:43:22.654+08:00 [ws] ⇄ res ✓ cron.list 0ms id=aa92c537...9a78
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:23.983+08:00 [ws] → event tick seq=18 clients=1 dropIfSlow=true
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:25.090+08:00 [ws] ⇄ res ✓ sessions.list 1ms id=9f4ce975...2e3e
+[1] 
+[1] [Reconcile] already in sync — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 entries: 4
+[1] [OpenClaw stdout] 2026-03-28T22:43:25.095+08:00 [ws] ⇄ res ✓ chat.history 2ms id=6f026b53...bca5
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:35.100+08:00 [ws] ⇄ res ✓ sessions.list 1ms id=059b6a59...c6a1
+[1] 
+[1] [Reconcile] already in sync — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 entries: 4
+[1] [OpenClaw stdout] 2026-03-28T22:43:35.104+08:00 [ws] ⇄ res ✓ chat.history 3ms id=0d204bb6...6530
+[1] 
+[1] [ChannelSync] ensureGatewayClientReady: starting engine gateway...
+[1] [OpenClaw] synced local extensions: mcp-bridge
+[1] [OpenClaw] startGateway: ensureReady done (3ms), phase=running
+[1] [OpenClaw] startGateway: existing process health check (12ms), healthy=true
+[1] [ChannelSync] ensureGatewayClientReady: engine phase= running message= OpenClaw gateway is running on loopback:18789.
+[1] [ChannelSync] ensureGatewayClientReady: connection info — url= ✓ token= ✓ version= 2026.3.2 clientEntryPath= ✓
+[1] [ChannelSync] ensureGatewayClientReady: needsNewClient= false hasExistingClient= true
+[1] [OpenClaw stdout] 2026-03-28T22:43:37.658+08:00 [ws] ⇄ res ✓ cron.list 0ms id=7b20827c...708b
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:45.108+08:00 [ws] ⇄ res ✓ sessions.list 1ms id=697c283e...b7c6
+[1] 
+[1] [Reconcile] already in sync — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 entries: 4
+[1] [OpenClaw stdout] 2026-03-28T22:43:45.113+08:00 [ws] ⇄ res ✓ chat.history 3ms id=a25a36fc...fde9
+[1] 
+[1] [ChannelSync] ensureGatewayClientReady: starting engine gateway...
+[1] [OpenClaw] synced local extensions: mcp-bridge
+[1] [OpenClaw] startGateway: ensureReady done (3ms), phase=running
+[1] [OpenClaw] startGateway: existing process health check (12ms), healthy=true
+[1] [ChannelSync] ensureGatewayClientReady: engine phase= running message= OpenClaw gateway is running on loopback:18789.
+[1] [ChannelSync] ensureGatewayClientReady: connection info — url= ✓ token= ✓ version= 2026.3.2 clientEntryPath= ✓
+[1] [ChannelSync] ensureGatewayClientReady: needsNewClient= false hasExistingClient= true
+[1] [OpenClaw stdout] 2026-03-28T22:43:52.664+08:00 [ws] ⇄ res ✓ cron.list 0ms id=16d774a2...a75a
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:53.985+08:00 [ws] → event tick seq=19 clients=1 dropIfSlow=true
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:54.034+08:00 [error]: [
+[1]   AxiosError: Request failed with status code 400
+[1]       at settle (D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\feishu-openclaw-plugin\node_modules\axios\dist\node\axios.cjs:2304:7)
+[1]       at IncomingMessage.handleStreamEnd (D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\feishu-openclaw-plugin\node_modules\axios\dist\node\axios.cjs:3772:13)
+[1]       at IncomingMessage.emit (node:events:520:35)
+[1]       at endReadableNT (node:internal/streams/readable:1701:12)
+[1]       at processTicksAndRejections (node:internal/process/task_queues:89:21)
+[1]       at Axios.request (D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\feishu-openclaw-plugin\node_modules\axios\dist\node\axios.cjs:5110:41)
+[1]       at processTicksAndRejections (node:internal/process/task_queues:103:5) {
+[1]     isAxiosError: true,
+[1]     code: 'ERR_BAD_REQUEST',
+[1]     config: {
+[1]       transitional: [Object],
+[1]       adapter: [Array],
+[1]       transformRequest: [Array],
+[1]       transformResponse: [Array],
+[1]       timeout: 0,
+[1]       xsrfCookieName: 'XSRF-TOKEN',
+[1]       xsrfHeaderName: 'X-XSRF-TOKEN',
+[1]       maxContentLength: -1,
+[1]       maxBodyLength: -1,
+[1]       env: [Object],
+[1]       validateStatus: [Function: validateStatus],
+[1]       headers: [Object [AxiosHeaders]],
+[1]       method: 'post',
+[1]       url: 'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
+[1]       data: '{"app_id":"cli_a926b8805378dcb6","app_secret":"Dzc9zsjP2yHxqqe33nHK8bEWuyvj3Xuw"}',
+[1]       allowAbsoluteUrls: true
+[1]     },
+[1]     request: ClientRequest {
+[1]       _events: [Object: null prototype],
+[1]       _eventsCount: 7,
+[1]       _maxListeners: undefined,
+[1]       outputData: [],
+[1]       outputSize: 0,
+[1]       writable: true,
+[1]       destroyed: true,
+[1]       _last: false,
+[1]       chunkedEncoding: false,
+[1]       shouldKeepAlive: true,
+[1]       maxRequestsOnConnectionReached: false,
+[1]       _defaultKeepAlive: true,
+[1]       useChunkedEncodingByDefault: true,
+[1]       sendDate: false,
+[1]       _removedConnection: false,
+[1]       _removedContLen: false,
+[1]       _removedTE: false,
+[1]       strictContentLength: false,
+[1]       _contentLength: 81,
+[1]       _hasBody: true,
+[1]       _trailer: '',
+[1]       finished: true,
+[1]       _headerSent: true,
+[1]       _closed: true,
+[1]       _header: 'POST https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal HTTP/1.1\r\n' +
+[1]         'Accept: application/json, text/plain, */*\r\n' +
+[1]         'Content-Type: application/json\r\n' +
+[1]         'User-Agent: oapi-node-sdk/1.0.0\r\n' +
+[1]         'Content-Length: 81\r\n' +
+[1]         'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+[1]         'host: open.feishu.cn\r\n' +
+[1]         'Connection: keep-alive\r\n' +
+[1]         '\r\n',
+[1]       _keepAliveTimeout: 0,
+[1]       _onPendingData: [Function: nop],
+[1]       agent: [Agent],
+[1]       socketPath: undefined,
+[1]       method: 'POST',
+[1]       maxHeaderSize: undefined,
+[1]       insecureHTTPParser: undefined,
+[1]       joinDuplicateHeaders: undefined,
+[1]       path: 'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
+[1]       _ended: true,
+[1]       res: [IncomingMessage],
+[1]       aborted: false,
+[1]       timeoutCb: null,
+[1]       upgradeOrConnect: false,
+[1]       parser: null,
+[1]       maxHeadersCount: null,
+[1]       reusedSocket: false,
+[1]       host: '127.0.0.1',
+[1]       protocol: 'http:',
+[1]       _redirectable: [Writable],
+[1]       Symbol(shapeMode): false,
+[1]       Symbol(kCapture): false,
+[1]       Symbol(kBytesWritten): 0,
+[1]       Symbol(kNeedDrain): false,
+[1]       Symbol(corked): 0,
+[1]       Symbol(kChunkedBuffer): [],
+[1]       Symbol(kChunkedLength): 0,
+[1]       Symbol(kSocket): [Socket],
+[1]       Symbol(kOutHeaders): [Object: null prototype],
+[1]       Symbol(errored): null,
+[1]       Symbol(kHighWaterMark): 16384,
+[1]       Symbol(kRejectNonStandardBodyWrites): false,
+[1]       Symbol(kUniqueHeaders): null
+[1]     },
+[1]     response: {
+[1]       status: 400,
+[1]       statusText: 'Bad Request',
+[1]       headers: [Object [AxiosHeaders]],
+[1]       config: [Object],
+[1]       request: [ClientRequest],
+[1]       data: '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">\r\n' +
+[1]         '<html>\r\n' +
+[1]         '<head><title>400 The plain HTTP request was sent to HTTPS port</title></head>\r\n' +
+[1]         '<body>\r\n' +
+[1]         '<h1>400 Bad Request</h1>\r\n' +
+[1]         '<p>The plain HTTP request was sent to HTTPS port.<hr/>Powered by Tengine</body>\r\n' +
+[1]         '</html>\r\n'
+[1]     },
+[1]     status: 400
+[1]   }
+[1] ]
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:54.037+08:00 [ws] → event health seq=20 clients=1 presenceVersion=2 healthVersion=4
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:43:55.114+08:00 [ws] ⇄ res ✓ sessions.list 1ms id=3cbbeebc...16b7
+[1] 
+[1] [Reconcile] already in sync — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 entries: 4
+[1] [OpenClaw stdout] 2026-03-28T22:43:55.118+08:00 [ws] ⇄ res ✓ chat.history 2ms id=85325a8c...592d
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:44:05.119+08:00 [ws] ⇄ res ✓ sessions.list 1ms id=5fbe1533...08a8
+[1] 
+[1] [Reconcile] already in sync — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 entries: 4
+[1] [OpenClaw stdout] 2026-03-28T22:44:05.124+08:00 [ws] ⇄ res ✓ chat.history 2ms id=513d4a9b...b323
+[1] 
+[1] [ChannelSync] ensureGatewayClientReady: starting engine gateway...
+[1] [OpenClaw] synced local extensions: mcp-bridge
+[1] [OpenClaw] startGateway: ensureReady done (3ms), phase=running
+[1] [OpenClaw] startGateway: existing process health check (11ms), healthy=true
+[1] [ChannelSync] ensureGatewayClientReady: engine phase= running message= OpenClaw gateway is running on loopback:18789.
+[1] [ChannelSync] ensureGatewayClientReady: connection info — url= ✓ token= ✓ version= 2026.3.2 clientEntryPath= ✓
+[1] [ChannelSync] ensureGatewayClientReady: needsNewClient= false hasExistingClient= true
+[1] [OpenClaw stdout] 2026-03-28T22:44:07.673+08:00 [ws] ⇄ res ✓ cron.list 1ms id=38e195e1...d3db
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:44:15.121+08:00 [ws] ⇄ res ✓ sessions.list 1ms id=bfbed92f...9762
+[1] 
+[1] [Reconcile] already in sync — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 entries: 4
+[1] [OpenClaw stdout] 2026-03-28T22:44:15.126+08:00 [ws] ⇄ res ✓ chat.history 2ms id=67a95209...21fe
+[1] 
+[1] [ChannelSync] ensureGatewayClientReady: starting engine gateway...
+[1] [OpenClaw] synced local extensions: mcp-bridge
+[1] [OpenClaw] startGateway: ensureReady done (3ms), phase=running
+[1] [OpenClaw] startGateway: existing process health check (11ms), healthy=true
+[1] [ChannelSync] ensureGatewayClientReady: engine phase= running message= OpenClaw gateway is running on loopback:18789.
+[1] [ChannelSync] ensureGatewayClientReady: connection info — url= ✓ token= ✓ version= 2026.3.2 clientEntryPath= ✓
+[1] [ChannelSync] ensureGatewayClientReady: needsNewClient= false hasExistingClient= true
+[1] [OpenClaw stdout] 2026-03-28T22:44:22.686+08:00 [ws] ⇄ res ✓ cron.list 0ms id=c28a1978...3b0c
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:44:23.991+08:00 [ws] → event tick seq=21 clients=1 dropIfSlow=true
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:44:25.132+08:00 [ws] ⇄ res ✓ sessions.list 2ms id=6af94ef2...a962
+[1] 
+[1] [Reconcile] already in sync — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 entries: 4
+[1] [OpenClaw stdout] 2026-03-28T22:44:25.139+08:00 [ws] ⇄ res ✓ chat.history 4ms id=bc1c9510...d7df
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:44:35.137+08:00 [ws] ⇄ res ✓ sessions.list 1ms id=25ef3526...c8e3
+[1] 
+[1] [Reconcile] already in sync — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 entries: 4
+[1] [OpenClaw stdout] 2026-03-28T22:44:35.145+08:00 [ws] ⇄ res ✓ chat.history 4ms id=298b8962...da0a
+[1] 
+[1] [ChannelSync] ensureGatewayClientReady: starting engine gateway...
+[1] [OpenClaw] synced local extensions: mcp-bridge
+[1] [OpenClaw] startGateway: ensureReady done (3ms), phase=running
+[1] [OpenClaw] startGateway: existing process health check (10ms), healthy=true
+[1] [ChannelSync] ensureGatewayClientReady: engine phase= running message= OpenClaw gateway is running on loopback:18789.
+[1] [ChannelSync] ensureGatewayClientReady: connection info — url= ✓ token= ✓ version= 2026.3.2 clientEntryPath= ✓
+[1] [ChannelSync] ensureGatewayClientReady: needsNewClient= false hasExistingClient= true
+[1] [OpenClaw stdout] 2026-03-28T22:44:37.692+08:00 [ws] ⇄ res ✓ cron.list 0ms id=54d89b50...6b10
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:44:45.153+08:00 [ws] ⇄ res ✓ sessions.list 2ms id=908215f3...700b
+[1] 
+[1] [Reconcile] already in sync — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 entries: 4
+[1] [OpenClaw stdout] 2026-03-28T22:44:45.157+08:00 [ws] ⇄ res ✓ chat.history 2ms id=b5f930ca...499b
+[1] 
+[1] [ChannelSync] ensureGatewayClientReady: starting engine gateway...
+[1] [OpenClaw] synced local extensions: mcp-bridge
+[1] [OpenClaw] startGateway: ensureReady done (4ms), phase=running
+[1] [OpenClaw] startGateway: existing process health check (12ms), healthy=true
+[1] [ChannelSync] ensureGatewayClientReady: engine phase= running message= OpenClaw gateway is running on loopback:18789.
+[1] [ChannelSync] ensureGatewayClientReady: connection info — url= ✓ token= ✓ version= 2026.3.2 clientEntryPath= ✓
+[1] [ChannelSync] ensureGatewayClientReady: needsNewClient= false hasExistingClient= true
+[1] [OpenClaw stdout] 2026-03-28T22:44:52.705+08:00 [ws] ⇄ res ✓ cron.list 0ms id=c89380c7...1369
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:44:53.995+08:00 [ws] → event tick seq=22 clients=1 dropIfSlow=true
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:44:54.028+08:00 [error]: [
+[1]   AxiosError: Request failed with status code 400
+[1]       at settle (D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\feishu-openclaw-plugin\node_modules\axios\dist\node\axios.cjs:2304:7)
+[1]       at IncomingMessage.handleStreamEnd (D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\feishu-openclaw-plugin\node_modules\axios\dist\node\axios.cjs:3772:13)
+[1]       at IncomingMessage.emit (node:events:520:35)
+[1]       at endReadableNT (node:internal/streams/readable:1701:12)
+[1]       at processTicksAndRejections (node:internal/process/task_queues:89:21)
+[1]       at Axios.request (D:\repositories\LobsterAI\vendor\openclaw-runtime\win-x64\extensions\feishu-openclaw-plugin\node_modules\axios\dist\node\axios.cjs:5110:41)
+[1]       at processTicksAndRejections (node:internal/process/task_queues:103:5) {
+[1]     isAxiosError: true,
+[1]     code: 'ERR_BAD_REQUEST',
+[1]     config: {
+[1]       transitional: [Object],
+[1]       adapter: [Array],
+[1]       transformRequest: [Array],
+[1]       transformResponse: [Array],
+[1]       timeout: 0,
+[1]       xsrfCookieName: 'XSRF-TOKEN',
+[1]       xsrfHeaderName: 'X-XSRF-TOKEN',
+[1]       maxContentLength: -1,
+[1]       maxBodyLength: -1,
+[1]       env: [Object],
+[1]       validateStatus: [Function: validateStatus],
+[1]       headers: [Object [AxiosHeaders]],
+[1]       method: 'post',
+[1]       url: 'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
+[1]       data: '{"app_id":"cli_a926b8805378dcb6","app_secret":"Dzc9zsjP2yHxqqe33nHK8bEWuyvj3Xuw"}',
+[1]       allowAbsoluteUrls: true
+[1]     },
+[1]     request: ClientRequest {
+[1]       _events: [Object: null prototype],
+[1]       _eventsCount: 7,
+[1]       _maxListeners: undefined,
+[1]       outputData: [],
+[1]       outputSize: 0,
+[1]       writable: true,
+[1]       destroyed: true,
+[1]       _last: false,
+[1]       chunkedEncoding: false,
+[1]       shouldKeepAlive: true,
+[1]       maxRequestsOnConnectionReached: false,
+[1]       _defaultKeepAlive: true,
+[1]       useChunkedEncodingByDefault: true,
+[1]       sendDate: false,
+[1]       _removedConnection: false,
+[1]       _removedContLen: false,
+[1]       _removedTE: false,
+[1]       strictContentLength: false,
+[1]       _contentLength: 81,
+[1]       _hasBody: true,
+[1]       _trailer: '',
+[1]       finished: true,
+[1]       _headerSent: true,
+[1]       _closed: true,
+[1]       _header: 'POST https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal HTTP/1.1\r\n' +
+[1]         'Accept: application/json, text/plain, */*\r\n' +
+[1]         'Content-Type: application/json\r\n' +
+[1]         'User-Agent: oapi-node-sdk/1.0.0\r\n' +
+[1]         'Content-Length: 81\r\n' +
+[1]         'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+[1]         'host: open.feishu.cn\r\n' +
+[1]         'Connection: keep-alive\r\n' +
+[1]         '\r\n',
+[1]       _keepAliveTimeout: 0,
+[1]       _onPendingData: [Function: nop],
+[1]       agent: [Agent],
+[1]       socketPath: undefined,
+[1]       method: 'POST',
+[1]       maxHeaderSize: undefined,
+[1]       insecureHTTPParser: undefined,
+[1]       joinDuplicateHeaders: undefined,
+[1]       path: 'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal',
+[1]       _ended: true,
+[1]       res: [IncomingMessage],
+[1]       aborted: false,
+[1]       timeoutCb: null,
+[1]       upgradeOrConnect: false,
+[1]       parser: null,
+[1]       maxHeadersCount: null,
+[1]       reusedSocket: false,
+[1]       host: '127.0.0.1',
+[1]       protocol: 'http:',
+[1]       _redirectable: [Writable],
+[1]       Symbol(shapeMode): false,
+[1]       Symbol(kCapture): false,
+[1]       Symbol(kBytesWritten): 0,
+[1]       Symbol(kNeedDrain): false,
+[1]       Symbol(corked): 0,
+[1]       Symbol(kChunkedBuffer): [],
+[1]       Symbol(kChunkedLength): 0,
+[1]       Symbol(kSocket): [Socket],
+[1]       Symbol(kOutHeaders): [Object: null prototype],
+[1]       Symbol(errored): null,
+[1]       Symbol(kHighWaterMark): 16384,
+[1]       Symbol(kRejectNonStandardBodyWrites): false,
+[1]       Symbol(kUniqueHeaders): null
+[1]     },
+[1]     response: {
+[1]       status: 400,
+[1]       statusText: 'Bad Request',
+[1]       headers: [Object [AxiosHeaders]],
+[1]       config: [Object],
+[1]       request: [ClientRequest],
+[1]       data: '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">\r\n' +
+[1]         '<html>\r\n' +
+[1]         '<head><title>400 The plain HTTP request was sent to HTTPS port</title></head>\r\n' +
+[1]         '<body>\r\n' +
+[1]         '<h1>400 Bad Request</h1>\r\n' +
+[1]         '<p>The plain HTTP request was sent to HTTPS port.<hr/>Powered by Tengine</body>\r\n' +
+[1]         '</html>\r\n'
+[1]     },
+[1]     status: 400
+[1]   }
+[1] ]
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:44:54.031+08:00 [ws] → event health seq=23 clients=1 presenceVersion=2 healthVersion=5
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:44:55.156+08:00 [ws] ⇄ res ✓ sessions.list 1ms id=a1ca8067...8957
+[1] 
+[1] [Reconcile] already in sync — sessionId: d7e2aea4-f079-4310-9edf-d1cdd53c0b30 entries: 4
+[1] [OpenClaw stdout] 2026-03-28T22:44:55.162+08:00 [ws] ⇄ res ✓ chat.history 4ms id=cfacdd0a...d852
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:44:57.731+08:00 [error]: [ '[ws]', 'Request failed with status code 400' ]
+[1] 
+[1] [OpenClaw stdout] 2026-03-28T22:44:57.732+08:00 [info]: [ 'ws', 'unable to connect to the server after trying 2 times")' ]
+[1] 

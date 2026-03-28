@@ -14,9 +14,15 @@ interface ApiStreamResponse {
   error?: string;
 }
 
+interface ProxyConfig {
+  mode?: 'inherit' | 'direct' | 'custom';
+  url?: string;
+}
+
 // Cowork types for IPC
 interface CoworkSession {
   id: string;
+  threadSeq: number | null;
   title: string;
   claudeSessionId: string | null;
   status: 'idle' | 'running' | 'completed' | 'error';
@@ -41,6 +47,7 @@ interface CoworkMessage {
 
 interface CoworkSessionSummary {
   id: string;
+  threadSeq: number | null;
   title: string;
   status: 'idle' | 'running' | 'completed' | 'error';
   pinned: boolean;
@@ -59,6 +66,27 @@ interface CoworkConfig {
   memoryLlmJudgeEnabled: boolean;
   memoryGuardLevel: 'strict' | 'standard' | 'relaxed';
   memoryUserMemoriesMaxItems: number;
+}
+
+interface CoworkSlashCommandDescriptor {
+  name: string;
+  aliases?: string[];
+  description: string;
+  usage: string;
+}
+
+interface CoworkSlashCommandUiAction {
+  type: 'new_chat' | 'stop_current_session' | 'refresh_model_state' | 'refresh_cowork_config' | 'open_session';
+  sessionId?: string;
+}
+
+interface CoworkSlashCommandResult {
+  handled: boolean;
+  commandName?: string;
+  ok?: boolean;
+  output?: string;
+  actions?: CoworkSlashCommandUiAction[];
+  commands?: CoworkSlashCommandDescriptor[];
 }
 
 type CoworkConfigUpdate = Partial<Pick<
@@ -282,6 +310,7 @@ interface IElectronAPI {
       method: string;
       headers: Record<string, string>;
       body?: string;
+      proxy?: ProxyConfig;
     }) => Promise<ApiResponse>;
     stream: (options: {
       url: string;
@@ -289,6 +318,7 @@ interface IElectronAPI {
       headers: Record<string, string>;
       body?: string;
       requestId: string;
+      proxy?: ProxyConfig;
     }) => Promise<ApiStreamResponse>;
     cancelStream: (requestId: string) => Promise<boolean>;
     onStreamData: (requestId: string, callback: (chunk: string) => void) => () => void;
@@ -325,6 +355,7 @@ interface IElectronAPI {
   cowork: {
     startSession: (options: { prompt: string; cwd?: string; systemPrompt?: string; title?: string; activeSkillIds?: string[]; agentId?: string; imageAttachments?: Array<{ name: string; mimeType: string; base64Data: string }> }) => Promise<{ success: boolean; session?: CoworkSession; error?: string; code?: string; engineStatus?: OpenClawEngineStatus }>;
     continueSession: (options: { sessionId: string; prompt: string; systemPrompt?: string; activeSkillIds?: string[]; imageAttachments?: Array<{ name: string; mimeType: string; base64Data: string }> }) => Promise<{ success: boolean; session?: CoworkSession; error?: string; code?: string; engineStatus?: OpenClawEngineStatus }>;
+    executeCommand?: (options: { input: string; currentSessionId?: string | null; isStreaming?: boolean }) => Promise<{ success: boolean; result?: CoworkSlashCommandResult; error?: string }>;
     stopSession: (sessionId: string) => Promise<{ success: boolean; error?: string }>;
     deleteSession: (sessionId: string) => Promise<{ success: boolean; error?: string }>;
     deleteSessions: (sessionIds: string[]) => Promise<{ success: boolean; error?: string }>;
@@ -530,6 +561,7 @@ interface DingTalkOpenClawConfig {
   enabled: boolean;
   clientId: string;
   clientSecret: string;
+  proxy?: ProxyConfig;
   dmPolicy: 'open' | 'pairing' | 'allowlist';
   allowFrom: string[];
   groupPolicy: 'open' | 'allowlist';
@@ -551,6 +583,7 @@ interface FeishuOpenClawConfig {
   enabled: boolean;
   appId: string;
   appSecret: string;
+  proxy?: ProxyConfig;
   domain: 'feishu' | 'lark' | string;
   dmPolicy: 'pairing' | 'allowlist' | 'open' | 'disabled';
   allowFrom: string[];
@@ -582,7 +615,7 @@ interface TelegramOpenClawConfig {
   linkPreview: boolean;
   streaming: 'off' | 'partial' | 'block' | 'progress';
   mediaMaxMb: number;
-  proxy: string;
+  proxy?: ProxyConfig;
   webhookUrl: string;
   webhookSecret: string;
   debug: boolean;
@@ -605,7 +638,7 @@ interface DiscordOpenClawConfig {
   historyLimit: number;
   streaming: 'off' | 'partial' | 'block' | 'progress';
   mediaMaxMb: number;
-  proxy: string;
+  proxy?: ProxyConfig;
   debug: boolean;
 }
 
@@ -635,6 +668,7 @@ interface NimConfig {
   appKey: string;
   account: string;
   token: string;
+  proxy?: ProxyConfig;
   p2p?: NimP2pConfig;
   team?: NimTeamConfig;
   qchat?: NimQChatConfig;
@@ -645,6 +679,7 @@ interface XiaomifengConfig {
   enabled: boolean;
   clientId: string;
   secret: string;
+  proxy?: ProxyConfig;
   debug?: boolean;
 }
 
@@ -652,6 +687,7 @@ interface QQConfig {
   enabled: boolean;
   appId: string;
   appSecret: string;
+  proxy?: ProxyConfig;
   dmPolicy: 'open' | 'pairing' | 'allowlist';
   allowFrom: string[];
   groupPolicy: 'open' | 'allowlist' | 'disabled';
@@ -666,6 +702,7 @@ interface WecomConfig {
   enabled: boolean;
   botId: string;
   secret: string;
+  proxy?: ProxyConfig;
   dmPolicy: 'open' | 'pairing' | 'allowlist' | 'disabled';
   allowFrom: string[];
   groupPolicy: 'open' | 'allowlist' | 'disabled';
@@ -679,6 +716,7 @@ interface PopoOpenClawConfig {
   connectionMode: 'websocket' | 'webhook';
   appKey: string;
   appSecret: string;
+  proxy?: ProxyConfig;
   token: string;
   aesKey: string;
   webhookBaseUrl: string;
@@ -696,6 +734,7 @@ interface PopoOpenClawConfig {
 interface WeixinOpenClawConfig {
   enabled: boolean;
   accountId: string;
+  proxy?: ProxyConfig;
   dmPolicy: 'open' | 'pairing' | 'allowlist' | 'disabled';
   allowFrom: string[];
   groupPolicy: 'open' | 'allowlist' | 'disabled';

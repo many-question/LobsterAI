@@ -120,9 +120,10 @@ const coworkSlice = createSlice({
       if (action.payload) {
         state.currentSessionId = action.payload.id;
         if (!action.payload.id.startsWith('temp-')) {
-          const { id, title, status, pinned, createdAt, updatedAt } = action.payload;
+          const { id, threadSeq, title, status, pinned, createdAt, updatedAt } = action.payload;
           const summary: CoworkSessionSummary = {
             id,
+            threadSeq,
             title,
             status,
             pinned: pinned ?? false,
@@ -155,6 +156,7 @@ const coworkSlice = createSlice({
     addSession(state, action: PayloadAction<CoworkSession>) {
       const summary: CoworkSessionSummary = {
         id: action.payload.id,
+        threadSeq: action.payload.threadSeq,
         title: action.payload.title,
         status: action.payload.status,
         pinned: action.payload.pinned ?? false,

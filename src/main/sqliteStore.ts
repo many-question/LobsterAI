@@ -80,6 +80,7 @@ export class SqliteStore {
     this.db.run(`
       CREATE TABLE IF NOT EXISTS cowork_sessions (
         id TEXT PRIMARY KEY,
+        thread_seq INTEGER,
         title TEXT NOT NULL,
         claude_session_id TEXT,
         status TEXT NOT NULL DEFAULT 'idle',
@@ -206,6 +207,11 @@ export class SqliteStore {
         this.save();
       }
 
+      if (!columns.includes('thread_seq')) {
+        this.db.run('ALTER TABLE cowork_sessions ADD COLUMN thread_seq INTEGER;');
+        this.save();
+      }
+
       if (!columns.includes('pinned')) {
         this.db.run('ALTER TABLE cowork_sessions ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0;');
         this.save();
@@ -240,6 +246,52 @@ export class SqliteStore {
       }
     } catch {
       // Column already exists or migration not needed.
+    }
+
+    try {
+      this.db.run(`
+        WITH ordered AS (
+          SELECT id, ROW_NUMBER() OVER (ORDER BY created_at ASC, ROWID ASC) AS seq
+          FROM cowork_sessions
+        )
+        UPDATE cowork_sessions
+        SET thread_seq = (
+          SELECT seq
+          FROM ordered
+          WHERE ordered.id = cowork_sessions.id
+        )
+        WHERE thread_seq IS NULL
+      `);
+    } catch {
+      try {
+        const rows = this.db.exec(`
+          SELECT id
+          FROM cowork_sessions
+          WHERE thread_seq IS NULL
+          ORDER BY created_at ASC, ROWID ASC
+        `);
+        const ids = rows[0]?.values.map((row) => String(row[0])) ?? [];
+        let nextSeq = 1;
+        try {
+          const maxResult = this.db.exec(`
+            SELECT MAX(thread_seq)
+            FROM cowork_sessions
+          `);
+          const rawMax = maxResult[0]?.values?.[0]?.[0];
+          if (typeof rawMax === 'number' && Number.isFinite(rawMax)) {
+            nextSeq = rawMax + 1;
+          }
+        } catch {
+          nextSeq = 1;
+        }
+
+        for (const id of ids) {
+          this.db.run('UPDATE cowork_sessions SET thread_seq = ? WHERE id = ?', [nextSeq, id]);
+          nextSeq += 1;
+        }
+      } catch {
+        // Ignore fallback backfill failures.
+      }
     }
 
     try {
@@ -294,6 +346,15 @@ export class SqliteStore {
       `);
     } catch (error) {
       console.warn('Failed to migrate cowork execution mode:', error);
+    }
+
+    try {
+      this.db.run(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_cowork_sessions_thread_seq
+        ON cowork_sessions(thread_seq)
+      `);
+    } catch (error) {
+      console.warn('Failed to create cowork thread sequence index:', error);
     }
 
     this.migrateLegacyMemoryFileToUserMemories();

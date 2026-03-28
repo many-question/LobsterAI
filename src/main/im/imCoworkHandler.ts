@@ -43,6 +43,11 @@ interface PendingIMPermission {
   timeoutId?: NodeJS.Timeout;
 }
 
+interface IMPreparedCoworkInput {
+  prompt: string;
+  imageAttachments: Array<{ name: string; mimeType: string; base64Data: string }>;
+}
+
 const PERMISSION_CONFIRM_TIMEOUT_MS = 60_000;
 const ACCUMULATOR_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 const IM_ALLOW_RESPONSE_RE = /^(允许|同意|yes|y)$/i;
@@ -175,6 +180,67 @@ export class IMCoworkHandler extends EventEmitter {
     }
   }
 
+  getSessionIdForConversation(conversationId: string, platform: IMPlatform): string | null {
+    const mapping = this.imStore.getSessionMapping(conversationId, platform);
+    if (!mapping) {
+      return null;
+    }
+
+    const session = this.coworkStore.getSession(mapping.coworkSessionId);
+    if (session) {
+      this.trackSessionMapping(mapping);
+      return mapping.coworkSessionId;
+    }
+
+    this.imStore.deleteSessionMapping(conversationId, platform);
+    this.imSessionIds.delete(mapping.coworkSessionId);
+    this.sessionConversationMap.delete(mapping.coworkSessionId);
+    this.clearPendingPermissionsBySessionId(mapping.coworkSessionId);
+    return null;
+  }
+
+  stopConversationSession(conversationId: string, platform: IMPlatform, options: {
+    clearMapping?: boolean;
+  } = {}): string | null {
+    const sessionId = this.getSessionIdForConversation(conversationId, platform);
+    if (!sessionId) {
+      if (options.clearMapping) {
+        this.imStore.deleteSessionMapping(conversationId, platform);
+      }
+      return null;
+    }
+
+    this.coworkRuntime.stopSession(sessionId);
+    this.clearPendingPermissionsBySessionId(sessionId);
+
+    if (options.clearMapping) {
+      this.imStore.deleteSessionMapping(conversationId, platform);
+      this.imSessionIds.delete(sessionId);
+      this.sessionConversationMap.delete(sessionId);
+    }
+
+    return sessionId;
+  }
+
+  switchConversationSession(conversationId: string, platform: IMPlatform, coworkSessionId: string): void {
+    const existing = this.imStore.getSessionMapping(conversationId, platform);
+    if (existing?.coworkSessionId === coworkSessionId) {
+      this.imStore.updateSessionLastActive(conversationId, platform);
+      this.trackSessionMapping(existing);
+      return;
+    }
+
+    if (existing) {
+      this.imStore.deleteSessionMapping(conversationId, platform);
+      this.imSessionIds.delete(existing.coworkSessionId);
+      this.sessionConversationMap.delete(existing.coworkSessionId);
+      this.clearPendingPermissionsBySessionId(existing.coworkSessionId);
+    }
+
+    const mapping = this.imStore.createSessionMapping(conversationId, platform, coworkSessionId);
+    this.trackSessionMapping(mapping);
+  }
+
   private async processMessageInternal(message: IMMessage, forceNewSession: boolean): Promise<string> {
     const coworkSessionId = await this.getOrCreateCoworkSession(
       message.conversationId,
@@ -188,7 +254,7 @@ export class IMCoworkHandler extends EventEmitter {
       platform: message.platform,
     });
 
-    const formattedContent = this.formatMessageWithMedia(message);
+    const preparedInput = this.prepareCoworkInput(message);
     const directScheduledTaskRequest = this.createScheduledTask && this.detectScheduledTaskRequest
       ? await this.detectScheduledTaskRequest(message)
       : null;
@@ -197,7 +263,7 @@ export class IMCoworkHandler extends EventEmitter {
       return this.handleDirectScheduledTaskRequest(
         coworkSessionId,
         message,
-        formattedContent,
+        preparedInput.prompt,
         directScheduledTaskRequest
       );
     }
@@ -232,8 +298,9 @@ export class IMCoworkHandler extends EventEmitter {
       coworkSessionId,
       isActive,
       originalContent: message.content,
-      formattedContent,
+      formattedContent: preparedInput.prompt,
       attachments: message.attachments,
+      imageAttachmentsCount: preparedInput.imageAttachments.length,
       hasAvailableSkills,
     }, null, 2));
 
@@ -245,13 +312,17 @@ export class IMCoworkHandler extends EventEmitter {
     };
 
     if (isActive) {
-      this.coworkRuntime.continueSession(coworkSessionId, formattedContent, { systemPrompt })
+      this.coworkRuntime.continueSession(coworkSessionId, preparedInput.prompt, {
+        systemPrompt,
+        imageAttachments: preparedInput.imageAttachments,
+      })
         .catch(onSessionStartError);
     } else {
-      this.coworkRuntime.startSession(coworkSessionId, formattedContent, {
+      this.coworkRuntime.startSession(coworkSessionId, preparedInput.prompt, {
         workspaceRoot: session?.cwd,
         confirmationMode: 'text',
         systemPrompt,
+        imageAttachments: preparedInput.imageAttachments,
       }).catch(onSessionStartError);
     }
 
@@ -971,6 +1042,95 @@ export class IMCoworkHandler extends EventEmitter {
     }
 
     return content;
+  }
+
+  private prepareCoworkInput(message: IMMessage): IMPreparedCoworkInput {
+    const promptSections: string[] = [];
+    const formattedContent = this.formatMessageWithMedia(message).trim();
+    if (formattedContent) {
+      promptSections.push(formattedContent);
+    }
+
+    const imageAttachments: Array<{ name: string; mimeType: string; base64Data: string }> = [];
+    const inputFileLines: string[] = [];
+    const seenPaths = new Set<string>();
+
+    for (const attachment of message.attachments ?? []) {
+      const normalizedPath = path.resolve(attachment.localPath);
+      if (!seenPaths.has(normalizedPath)) {
+        seenPaths.add(normalizedPath);
+        inputFileLines.push(`input file: ${normalizedPath}`);
+      }
+
+      if (!this.isNativeImageAttachment(attachment)) {
+        continue;
+      }
+
+      const payload = this.toImageAttachmentPayload(attachment);
+      if (payload) {
+        imageAttachments.push(payload);
+      }
+    }
+
+    if (message.attachments && message.attachments.length > 0) {
+      const attachmentNotes: string[] = [];
+      if (imageAttachments.length > 0) {
+        attachmentNotes.push(
+          imageAttachments.length === 1
+            ? 'One attached image is included as a native image input.'
+            : `${imageAttachments.length} attached images are included as native image inputs.`
+        );
+      }
+      if (inputFileLines.length > 0) {
+        attachmentNotes.push('Attached files are available below as input files.');
+      }
+      if (attachmentNotes.length > 0) {
+        promptSections.push(attachmentNotes.join('\n'));
+      }
+      if (inputFileLines.length > 0) {
+        promptSections.push(inputFileLines.join('\n'));
+      }
+    }
+
+    if (promptSections.length === 0) {
+      promptSections.push('Please process the attached inputs.');
+    }
+
+    return {
+      prompt: promptSections.join('\n\n'),
+      imageAttachments,
+    };
+  }
+
+  private isNativeImageAttachment(attachment: IMMediaAttachment): boolean {
+    if (attachment.type === 'image' || attachment.type === 'sticker') {
+      return true;
+    }
+    return attachment.mimeType.toLowerCase().startsWith('image/');
+  }
+
+  private toImageAttachmentPayload(
+    attachment: IMMediaAttachment
+  ): { name: string; mimeType: string; base64Data: string } | null {
+    try {
+      const filePath = path.resolve(attachment.localPath);
+      const buffer = fs.readFileSync(filePath);
+      if (buffer.length === 0) {
+        return null;
+      }
+
+      return {
+        name: attachment.fileName || path.basename(filePath) || 'image',
+        mimeType: attachment.mimeType || 'image/png',
+        base64Data: buffer.toString('base64'),
+      };
+    } catch (error) {
+      console.warn('[IMCoworkHandler] Failed to load image attachment for native vision:', {
+        localPath: attachment.localPath,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return null;
+    }
   }
 
   /**

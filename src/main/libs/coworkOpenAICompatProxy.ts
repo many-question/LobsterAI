@@ -1,5 +1,4 @@
 import http from 'http';
-import { session } from 'electron';
 import {
   anthropicToOpenAI,
   buildOpenAIChatCompletionsURL,
@@ -8,12 +7,15 @@ import {
   openAIToAnthropic,
   type OpenAIStreamChunk,
 } from './coworkFormatTransform';
+import type { ProxyConfig } from '../../shared/proxy';
+import { fetchWithProxy } from './networkProxy';
 
 export type OpenAICompatUpstreamConfig = {
   baseURL: string;
   apiKey?: string;
   model: string;
   provider?: string;
+  proxy?: ProxyConfig;
 };
 
 export type OpenAICompatProxyTarget = 'local' | 'sandbox';
@@ -2300,12 +2302,12 @@ async function handleRequest(
   ): Promise<Response> => {
     currentTargetURL = targetURL;
     console.log(`[CoworkProxy] Sending upstream request to: ${targetURL}`);
-    return session.defaultSession.fetch(targetURL, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-    });
-  };
+      return fetchWithProxy(targetURL, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+      }, upstreamConfig.proxy);
+    };
 
   let upstreamResponse: Response;
   const fetchStartTime = Date.now();

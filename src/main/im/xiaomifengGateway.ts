@@ -11,7 +11,6 @@ import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
 import { app } from 'electron';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const NIM = require('nim-web-sdk-ng/dist/nodejs/nim.js').default;
 import type { V2NIM } from 'nim-web-sdk-ng/dist/nodejs/nim';
 import {
@@ -20,6 +19,8 @@ import {
   IMMessage,
   DEFAULT_XIAOMIFENG_STATUS,
 } from './types';
+import { fetchWithProxyConfig } from './http';
+import { acquireProcessProxyEnvLease } from '../libs/networkProxy';
 
 // ==================== Constants ====================
 
@@ -194,6 +195,7 @@ export class XiaomifengGateway extends EventEmitter {
   // 持久化：最后处理的消息时间戳（防止重启后重复处理历史消息）
   private lastProcessedTimestamp: number = 0;
   private stateFilePath: string = '';
+  private releaseProxyEnvLease: (() => void) | null = null;
 
   constructor() {
     super();
@@ -378,6 +380,9 @@ export class XiaomifengGateway extends EventEmitter {
     console.log('[Xiaomifeng Gateway] config.debug =', config.debug);
 
     try {
+      await this.releaseRuntimeProxyLease();
+      this.releaseProxyEnvLease = await acquireProcessProxyEnvLease(config.proxy, 'https://api.mifengs.com');
+
       const dataPath = getSdkDataPath(config.clientId);
       this.log('[Xiaomifeng Gateway] Data path:', dataPath);
 
@@ -506,6 +511,7 @@ export class XiaomifengGateway extends EventEmitter {
       const savedConfig = this.config;
       this.cleanup();
       this.config = savedConfig;
+      await this.releaseRuntimeProxyLease();
       this.status = createDefaultStatus(savedConfig?.clientId || null);
       this.status.lastError = error.message;
       this.emit('error', error);
@@ -519,6 +525,7 @@ export class XiaomifengGateway extends EventEmitter {
   async stop(): Promise<void> {
     if (!this.v2Client) {
       this.log('[Xiaomifeng Gateway] Not running');
+      await this.releaseRuntimeProxyLease();
       return;
     }
 
@@ -543,6 +550,7 @@ export class XiaomifengGateway extends EventEmitter {
       }
 
       this.cleanup();
+      await this.releaseRuntimeProxyLease();
 
       this.status = createDefaultStatus();
 
@@ -552,6 +560,8 @@ export class XiaomifengGateway extends EventEmitter {
     } catch (error: any) {
       console.error(`[Xiaomifeng Gateway] Error stopping: ${error.message}`);
       this.status.lastError = error.message;
+    } finally {
+      await this.releaseRuntimeProxyLease();
     }
   }
 
@@ -560,6 +570,15 @@ export class XiaomifengGateway extends EventEmitter {
    */
   private cleanup(): void {
     this.v2Client = null;
+  }
+
+  private async releaseRuntimeProxyLease(): Promise<void> {
+    if (!this.releaseProxyEnvLease) {
+      return;
+    }
+    const release = this.releaseProxyEnvLease;
+    this.releaseProxyEnvLease = null;
+    release();
   }
 
   /**
@@ -822,13 +841,13 @@ export class XiaomifengGateway extends EventEmitter {
     };
 
     try {
-      const response = await fetch(XiaomifengGateway.BEE_TOKEN_API_URL, {
+      const response = await fetchWithProxyConfig(XiaomifengGateway.BEE_TOKEN_API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(tokenPayload),
-      });
+      }, this.config?.proxy);
 
       const responseText = await response.text();
       console.log('[Xiaomifeng Gateway] Token API Response:', responseText);
@@ -910,13 +929,13 @@ export class XiaomifengGateway extends EventEmitter {
       console.log('[Xiaomifeng Gateway] =============================================');
 
       try {
-        const response = await fetch(XiaomifengGateway.BEE_HTTP_API_URL, {
+        const response = await fetchWithProxyConfig(XiaomifengGateway.BEE_HTTP_API_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(payload),
-        });
+        }, this.config?.proxy);
 
         const responseText = await response.text();
         console.log(`[Xiaomifeng Gateway] ========== HTTP Response${chunkInfo} ==========`);

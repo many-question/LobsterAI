@@ -1,4 +1,6 @@
 // 配置类型定义
+import type { ProxyConfig } from '../shared/proxy';
+
 export interface AppConfig {
   // API 配置
   api: {
@@ -21,6 +23,7 @@ export interface AppConfig {
       enabled: boolean;
       apiKey: string;
       baseUrl: string;
+      proxy?: ProxyConfig;
       // API 协议格式：anthropic 为 Anthropic 兼容，openai 为 OpenAI 兼容
       apiFormat?: 'anthropic' | 'openai';
       models?: Array<{
@@ -33,6 +36,7 @@ export interface AppConfig {
       enabled: boolean;
       apiKey: string;
       baseUrl: string;
+      proxy?: ProxyConfig;
       apiFormat?: 'anthropic' | 'openai';
       models?: Array<{
         id: string;
@@ -44,6 +48,7 @@ export interface AppConfig {
       enabled: boolean;
       apiKey: string;
       baseUrl: string;
+      proxy?: ProxyConfig;
       apiFormat?: 'anthropic' | 'openai';
       /** 是否启用 Moonshot Coding Plan 模式（使用专属 Coding API 端点） */
       codingPlanEnabled?: boolean;
@@ -57,6 +62,7 @@ export interface AppConfig {
       enabled: boolean;
       apiKey: string;
       baseUrl: string;
+      proxy?: ProxyConfig;
       apiFormat?: 'anthropic' | 'openai';
       /** 是否启用 GLM Coding Plan 模式（使用专属 Coding API 端点） */
       codingPlanEnabled?: boolean;
@@ -70,6 +76,7 @@ export interface AppConfig {
       enabled: boolean;
       apiKey: string;
       baseUrl: string;
+      proxy?: ProxyConfig;
       apiFormat?: 'anthropic' | 'openai';
       /** OAuth auth type: 'apikey' (default) or 'oauth' (MiniMax Portal OAuth) */
       authType?: 'apikey' | 'oauth';
@@ -87,6 +94,7 @@ export interface AppConfig {
       enabled: boolean;
       apiKey: string;
       baseUrl: string;
+      proxy?: ProxyConfig;
       apiFormat?: 'anthropic' | 'openai';
       models?: Array<{
         id: string;
@@ -98,6 +106,7 @@ export interface AppConfig {
       enabled: boolean;
       apiKey: string;
       baseUrl: string;
+      proxy?: ProxyConfig;
       apiFormat?: 'anthropic' | 'openai';
       /** 是否启用 Qwen Coding Plan 模式（使用专属 Coding API 端点） */
       codingPlanEnabled?: boolean;
@@ -111,6 +120,7 @@ export interface AppConfig {
       enabled: boolean;
       apiKey: string;
       baseUrl: string;
+      proxy?: ProxyConfig;
       apiFormat?: 'anthropic' | 'openai';
       models?: Array<{
         id: string;
@@ -122,6 +132,7 @@ export interface AppConfig {
       enabled: boolean;
       apiKey: string;
       baseUrl: string;
+      proxy?: ProxyConfig;
       apiFormat?: 'anthropic' | 'openai';
       models?: Array<{
         id: string;
@@ -133,6 +144,7 @@ export interface AppConfig {
       enabled: boolean;
       apiKey: string;
       baseUrl: string;
+      proxy?: ProxyConfig;
       apiFormat?: 'anthropic' | 'openai';
       models?: Array<{
         id: string;
@@ -144,6 +156,7 @@ export interface AppConfig {
       enabled: boolean;
       apiKey: string;
       baseUrl: string;
+      proxy?: ProxyConfig;
       apiFormat?: 'anthropic' | 'openai';
       /** 是否启用 Volcengine Coding Plan 模式（使用专属 Coding API 端点） */
       codingPlanEnabled?: boolean;
@@ -157,6 +170,7 @@ export interface AppConfig {
       enabled: boolean;
       apiKey: string;
       baseUrl: string;
+      proxy?: ProxyConfig;
       apiFormat?: 'anthropic' | 'openai';
       models?: Array<{
         id: string;
@@ -168,6 +182,19 @@ export interface AppConfig {
       enabled: boolean;
       apiKey: string;
       baseUrl: string;
+      proxy?: ProxyConfig;
+      apiFormat?: 'anthropic' | 'openai';
+      models?: Array<{
+        id: string;
+        name: string;
+        supportsImage?: boolean;
+      }>;
+    };
+    lmstudio: {
+      enabled: boolean;
+      apiKey: string;
+      baseUrl: string;
+      proxy?: ProxyConfig;
       apiFormat?: 'anthropic' | 'openai';
       models?: Array<{
         id: string;
@@ -179,6 +206,7 @@ export interface AppConfig {
       enabled: boolean;
       apiKey: string;
       baseUrl: string;
+      proxy?: ProxyConfig;
       apiFormat?: 'anthropic' | 'openai';
       models?: Array<{
         id: string;
@@ -190,6 +218,7 @@ export interface AppConfig {
       enabled: boolean;
       apiKey: string;
       baseUrl: string;
+      proxy?: ProxyConfig;
       apiFormat?: 'anthropic' | 'openai';
       models?: Array<{
         id: string;
@@ -201,6 +230,7 @@ export interface AppConfig {
       enabled: boolean;
       apiKey: string;
       baseUrl: string;
+      proxy?: ProxyConfig;
       apiFormat?: 'anthropic' | 'openai';
       codingPlanEnabled?: boolean;
       authType?: 'apikey' | 'oauth';
@@ -388,6 +418,15 @@ export const defaultConfig: AppConfig = {
         { id: 'google/gemini-3-pro-preview', name: 'Gemini 3 Pro', supportsImage: true },
       ]
     },
+    lmstudio: {
+      enabled: false,
+      apiKey: '',
+      baseUrl: 'http://localhost:1234/v1',
+      apiFormat: 'openai',
+      models: [
+        { id: 'qwen3-coder-next', name: 'Qwen3-Coder-Next', supportsImage: false },
+      ]
+    },
     ollama: {
       enabled: false,
       apiKey: '',
@@ -431,7 +470,7 @@ export const CONFIG_KEYS = {
 };
 
 // 模型提供商分类
-export const CHINA_PROVIDERS = ['deepseek', 'moonshot', 'qwen', 'zhipu', 'minimax', 'volcengine', 'youdaozhiyun', 'stepfun', 'xiaomi', 'ollama', 'custom'] as const;
+export const CHINA_PROVIDERS = ['deepseek', 'moonshot', 'qwen', 'zhipu', 'minimax', 'volcengine', 'youdaozhiyun', 'stepfun', 'xiaomi', 'lmstudio', 'ollama', 'custom'] as const;
 export const GLOBAL_PROVIDERS = ['openai', 'gemini', 'anthropic', 'openrouter'] as const;
 export const EN_PRIORITY_PROVIDERS = ['openai', 'anthropic', 'gemini'] as const;
 
@@ -455,8 +494,8 @@ export const getVisibleProviders = (language: 'zh' | 'en'): readonly string[] =>
     ...GLOBAL_PROVIDERS,
   ];
   const uniqueProviders = [...new Set(orderedProviders)];
-  // Move ollama and custom to the end, with custom last
-  for (const key of ['ollama', 'custom'] as const) {
+  // Move local/custom providers to the end, with custom last
+  for (const key of ['lmstudio', 'ollama', 'custom'] as const) {
     const idx = uniqueProviders.indexOf(key);
     if (idx !== -1) {
       uniqueProviders.splice(idx, 1);

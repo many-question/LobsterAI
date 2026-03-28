@@ -18,7 +18,10 @@ import type { PermissionResult } from '@anthropic-ai/claude-agent-sdk';
 import { getCurrentApiConfig, resolveCurrentApiConfig, setStoreGetter, setAuthTokensGetter, setServerBaseUrlGetter, updateServerModelMetadata, clearServerModelMetadata } from './libs/claudeSettings';
 import { saveCoworkApiConfig } from './libs/coworkConfigStore';
 import { generateSessionTitle, probeCoworkModelReadiness } from './libs/coworkUtil';
+import { executeCoworkSlashCommand } from './libs/coworkSlashCommands';
+import { getCoworkSlashCommandStatusSnapshot } from './libs/coworkStatus';
 import { startCoworkOpenAICompatProxy, stopCoworkOpenAICompatProxy, setProxyTokenRefresher } from './libs/coworkOpenAICompatProxy';
+import { fetchWithProxy } from './libs/networkProxy';
 import { OpenClawEngineManager, type OpenClawEngineStatus } from './libs/openclawEngineManager';
 import {
   listPairingRequests,
@@ -56,6 +59,7 @@ import { isAutoLaunched, getAutoLaunchEnabled, setAutoLaunchEnabled } from './au
 import { McpStore } from './mcpStore';
 import { CronJobService } from '../scheduled-task/cronJobService';
 import { migrateScheduledTasksToOpenclaw, migrateScheduledTaskRunsToOpenclaw } from '../scheduled-task/migrate';
+import type { ProxyConfig } from '../shared/proxy';
 import { buildScheduledTaskEnginePrompt } from '../scheduled-task/enginePrompt';
 import { IpcChannel as ScheduledTaskIpc, DeliveryMode as STDeliveryMode, SessionTarget as STSessionTarget, PayloadKind as STPayloadKind } from '../scheduled-task/constants';
 import { McpServerManager } from './libs/mcpServerManager';
@@ -69,8 +73,8 @@ import { exportLogsZip } from './libs/logExport';
 import { ensurePythonRuntimeReady } from './libs/pythonRuntime';
 import {
   applySystemProxyEnv,
+  clearProxyEnv,
   resolveSystemProxyUrl,
-  restoreOriginalProxyEnv,
   setSystemProxyEnabled,
 } from './libs/systemProxy';
 
@@ -1573,7 +1577,7 @@ const applyProxyPreference = async (useSystemProxy: boolean): Promise<void> => {
   setSystemProxyEnabled(useSystemProxy);
 
   if (!useSystemProxy) {
-    restoreOriginalProxyEnv();
+    clearProxyEnv();
     console.log('[Main] System proxy disabled (direct mode).');
     return;
   }
@@ -2564,6 +2568,40 @@ if (!gotTheLock) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to continue session',
+      };
+    }
+  });
+
+  ipcMain.handle('cowork:command:execute', async (_event, options: {
+    input: string;
+    currentSessionId?: string | null;
+    isStreaming?: boolean;
+  }) => {
+    try {
+      const coworkStoreInstance = getCoworkStore();
+      const currentSession = options.currentSessionId
+        ? coworkStoreInstance.getSession(options.currentSessionId)
+        : null;
+      const result = await executeCoworkSlashCommand(options.input, {
+        currentSessionId: options.currentSessionId ?? null,
+        isStreaming: options.isStreaming ?? false,
+        configStore: {
+          getConfig: () => coworkStoreInstance.getConfig(),
+          setConfig: (config) => coworkStoreInstance.setConfig(config),
+          getSession: (sessionId) => coworkStoreInstance.getSession(sessionId),
+          listSessions: () => coworkStoreInstance.listSessions(),
+        },
+        getStatusSnapshot: () => getCoworkSlashCommandStatusSnapshot({
+          config: coworkStoreInstance.getConfig(),
+          session: currentSession,
+          runtime: getCoworkEngineRouter(),
+        }),
+      });
+      return { success: true, result };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to execute slash command',
       };
     }
   });
@@ -3982,14 +4020,15 @@ if (!gotTheLock) {
     method: string;
     headers: Record<string, string>;
     body?: string;
+    proxy?: ProxyConfig;
   }) => {
     console.log(`[api:fetch] ${options.method} ${options.url}`);
     try {
-      const response = await session.defaultSession.fetch(options.url, {
+      const response = await fetchWithProxy(options.url, {
         method: options.method,
         headers: options.headers,
         body: options.body,
-      });
+      }, options.proxy);
 
       const contentType = response.headers.get('content-type') || '';
       let data: string | object;
@@ -4032,6 +4071,7 @@ if (!gotTheLock) {
     headers: Record<string, string>;
     body?: string;
     requestId: string;
+    proxy?: ProxyConfig;
   }) => {
     const controller = new AbortController();
 
@@ -4039,12 +4079,12 @@ if (!gotTheLock) {
     activeStreamControllers.set(options.requestId, controller);
 
     try {
-      const response = await session.defaultSession.fetch(options.url, {
+      const response = await fetchWithProxy(options.url, {
         method: options.method,
         headers: options.headers,
         body: options.body,
         signal: controller.signal,
-      });
+      }, options.proxy);
 
       if (!response.ok) {
         const errorData = await response.text();
@@ -4067,20 +4107,39 @@ if (!gotTheLock) {
       }
 
       // 读取流式响应并通过 IPC 发送
-      const reader = response.body.getReader();
       const decoder = new TextDecoder();
 
       const readStream = async () => {
         try {
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) {
-              event.sender.send(`api:stream:${options.requestId}:done`);
-              break;
+          const body = response.body as
+            | { getReader: () => ReadableStreamDefaultReader<Uint8Array> }
+            | AsyncIterable<Uint8Array>
+            | null;
+
+          if (body && typeof (body as { getReader?: unknown }).getReader === 'function') {
+            const reader = (body as { getReader: () => ReadableStreamDefaultReader<Uint8Array> }).getReader();
+            while (true) {
+              const { value, done } = await reader.read();
+              if (done) {
+                event.sender.send(`api:stream:${options.requestId}:done`);
+                break;
+              }
+              const chunk = decoder.decode(value);
+              event.sender.send(`api:stream:${options.requestId}:data`, chunk);
             }
-            const chunk = decoder.decode(value);
-            event.sender.send(`api:stream:${options.requestId}:data`, chunk);
+            return;
           }
+
+          if (body && Symbol.asyncIterator in Object(body)) {
+            for await (const value of body as AsyncIterable<Uint8Array>) {
+              const chunk = decoder.decode(value);
+              event.sender.send(`api:stream:${options.requestId}:data`, chunk);
+            }
+            event.sender.send(`api:stream:${options.requestId}:done`);
+            return;
+          }
+
+          event.sender.send(`api:stream:${options.requestId}:error`, 'No readable response body');
         } catch (error) {
           if (error instanceof Error && error.name === 'AbortError') {
             event.sender.send(`api:stream:${options.requestId}:abort`);

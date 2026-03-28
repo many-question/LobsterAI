@@ -1,4 +1,5 @@
-import { app, session } from 'electron';
+import type { ProxyConfig } from '../../shared/proxy';
+import { fetchWithProxy } from '../libs/networkProxy';
 
 function linkAbortSignal(source: AbortSignal, controller: AbortController): void {
   if (source.aborted) {
@@ -8,23 +9,21 @@ function linkAbortSignal(source: AbortSignal, controller: AbortController): void
   source.addEventListener('abort', () => controller.abort(), { once: true });
 }
 
-export async function fetchWithSystemProxy(url: string, options: RequestInit = {}): Promise<Response> {
-  if (app.isReady()) {
-    try {
-      return await session.defaultSession.fetch(url, options);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.warn(`[IM HTTP] session fetch failed, fallback to global fetch: ${message}`);
-    }
-  }
-
-  return fetch(url, options);
+export async function fetchWithProxyConfig(
+  url: string,
+  options: RequestInit = {},
+  proxyConfig?: ProxyConfig
+): Promise<Response> {
+  return fetchWithProxy(url, options, proxyConfig);
 }
+
+export const fetchWithSystemProxy = fetchWithProxyConfig;
 
 export async function fetchJsonWithTimeout<T>(
   url: string,
   options: RequestInit = {},
-  timeoutMs = 10_000
+  timeoutMs = 10_000,
+  proxyConfig?: ProxyConfig
 ): Promise<T> {
   const timeoutController = new AbortController();
   const timeoutId = setTimeout(() => timeoutController.abort(), timeoutMs);
@@ -34,10 +33,10 @@ export async function fetchJsonWithTimeout<T>(
   }
 
   try {
-    const response = await fetchWithSystemProxy(url, {
+    const response = await fetchWithProxyConfig(url, {
       ...options,
       signal: timeoutController.signal,
-    });
+    }, proxyConfig);
 
     const rawText = await response.text();
     let data: unknown = null;

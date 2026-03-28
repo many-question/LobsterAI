@@ -18,6 +18,8 @@ import { QRCodeSVG } from 'qrcode.react';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import { SchemaForm } from './SchemaForm';
 import type { UiHint } from './SchemaForm';
+import type { ProxyConfig } from '../../../shared/proxy';
+import { normalizeProxyConfig } from '../../../shared/proxy';
 
 // Platform metadata - logos only, labels use i18n
 const platformLogos: Record<IMPlatform, string> = {
@@ -1001,6 +1003,65 @@ const IMSettings: React.FC = () => {
     return actionMap[platform];
   };
 
+  const handleProxyChange = (platform: IMPlatform, field: 'proxyMode' | 'proxyUrl', value: string) => {
+    const platformConfig = config[platform] as { proxy?: ProxyConfig };
+    const currentProxy = normalizeProxyConfig(platformConfig.proxy);
+    const nextProxy = normalizeProxyConfig(
+      field === 'proxyMode'
+        ? { ...currentProxy, mode: value as ProxyConfig['mode'] }
+        : { ...currentProxy, mode: 'custom', url: value }
+    );
+    dispatch(getSetConfigAction(platform)({ proxy: nextProxy }));
+  };
+
+  const renderProxySettings = (platform: IMPlatform) => {
+    const platformConfig = config[platform] as { proxy?: ProxyConfig };
+    const proxy = normalizeProxyConfig(platformConfig.proxy);
+    const proxyMode = proxy.mode ?? 'inherit';
+    const proxyUrl = proxy.url || '';
+
+    return (
+      <div className="space-y-2 rounded-xl border dark:border-claude-darkBorder/60 border-claude-border/60 dark:bg-claude-darkSurface/30 bg-white/70 px-3 py-3">
+        <div className="text-xs font-medium dark:text-claude-darkText text-claude-text">
+          {language === 'zh' ? '网络代理' : 'Network Proxy'}
+        </div>
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium dark:text-claude-darkTextSecondary text-claude-textSecondary">
+            {language === 'zh' ? '代理模式' : 'Proxy Mode'}
+          </label>
+          <select
+            value={proxyMode}
+            onChange={(e) => handleProxyChange(platform, 'proxyMode', e.target.value)}
+            onBlur={handleSaveConfig}
+            className="block w-full rounded-lg dark:bg-claude-darkSurface/80 bg-claude-surface/80 dark:border-claude-darkBorder/60 border-claude-border/60 border focus:border-claude-accent focus:ring-1 focus:ring-claude-accent/30 dark:text-claude-darkText text-claude-text px-3 py-2 text-sm transition-colors"
+          >
+            <option value="inherit">{language === 'zh' ? '继承全局系统代理' : 'Inherit Global System Proxy'}</option>
+            <option value="direct">{language === 'zh' ? '直连' : 'Direct'}</option>
+            <option value="custom">{language === 'zh' ? '自定义 HTTP 代理' : 'Custom HTTP Proxy'}</option>
+          </select>
+        </div>
+        {proxyMode === 'custom' && (
+          <div className="space-y-1.5">
+            <label className="block text-xs font-medium dark:text-claude-darkTextSecondary text-claude-textSecondary">
+              HTTP Proxy URL
+            </label>
+            <input
+              type="text"
+              value={proxyUrl}
+              onChange={(e) => handleProxyChange(platform, 'proxyUrl', e.target.value)}
+              onBlur={handleSaveConfig}
+              placeholder="http://127.0.0.1:7890"
+              className="block w-full rounded-lg dark:bg-claude-darkSurface/80 bg-claude-surface/80 dark:border-claude-darkBorder/60 border-claude-border/60 border focus:border-claude-accent focus:ring-1 focus:ring-claude-accent/30 dark:text-claude-darkText text-claude-text px-3 py-2 text-sm transition-colors"
+            />
+            <p className="text-[11px] dark:text-claude-darkTextSecondary text-claude-textSecondary">
+              {language === 'zh' ? '仅支持 http:// 或 https:// 代理地址。' : 'Only http:// or https:// proxy URLs are supported.'}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderConnectivityTestButton = (platform: IMPlatform) => (
     <button
       type="button"
@@ -1474,9 +1535,11 @@ const IMSettings: React.FC = () => {
               </div>
             </details>
 
-            <div className="pt-1">
-              {renderConnectivityTestButton('dingtalk')}
-            </div>
+              {renderProxySettings('dingtalk')}
+
+              <div className="pt-1">
+                {renderConnectivityTestButton('dingtalk')}
+              </div>
 
             {/* Error display */}
             {status.dingtalk.lastError && (
@@ -1877,9 +1940,11 @@ const IMSettings: React.FC = () => {
               </div>
             </details>
 
-            <div className="pt-1">
-              {renderConnectivityTestButton('feishu')}
-            </div>
+              {renderProxySettings('feishu')}
+
+              <div className="pt-1">
+                {renderConnectivityTestButton('feishu')}
+              </div>
 
             {/* Error display */}
             {status.feishu.error && (
@@ -2145,9 +2210,11 @@ const IMSettings: React.FC = () => {
               </div>
             </details>
 
-            <div className="pt-1">
-              {renderConnectivityTestButton('qq')}
-            </div>
+              {renderProxySettings('qq')}
+
+              <div className="pt-1">
+                {renderConnectivityTestButton('qq')}
+              </div>
 
             {/* Error display */}
             {status.qq?.lastError && (
@@ -2327,20 +2394,7 @@ const IMSettings: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Proxy */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-medium dark:text-claude-darkTextSecondary text-claude-textSecondary">
-                    Proxy
-                  </label>
-                  <input
-                    type="text"
-                    value={tgOpenClawConfig.proxy}
-                    onChange={(e) => handleTelegramOpenClawChange({ proxy: e.target.value })}
-                    onBlur={() => handleSaveTelegramOpenClawConfig()}
-                    className="block w-full rounded-lg dark:bg-claude-darkSurface/80 bg-claude-surface/80 dark:border-claude-darkBorder/60 border-claude-border/60 border focus:border-claude-accent focus:ring-1 focus:ring-claude-accent/30 dark:text-claude-darkText text-claude-text px-3 py-2 text-sm transition-colors"
-                    placeholder="socks5://localhost:9050"
-                  />
-                </div>
+                {renderProxySettings('telegram')}
 
                 {/* Group Policy */}
                 <div className="space-y-1.5">
@@ -2470,9 +2524,9 @@ const IMSettings: React.FC = () => {
               </div>
             </details>
 
-            <div className="pt-1">
-              {renderConnectivityTestButton('telegram')}
-            </div>
+              <div className="pt-1">
+                {renderConnectivityTestButton('telegram')}
+              </div>
           </div>
         )}
 
@@ -2647,20 +2701,7 @@ const IMSettings: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Proxy */}
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-medium dark:text-claude-darkTextSecondary text-claude-textSecondary">
-                    Proxy
-                  </label>
-                  <input
-                    type="text"
-                    value={dcOpenClawConfig.proxy}
-                    onChange={(e) => handleDiscordOpenClawChange({ proxy: e.target.value })}
-                    onBlur={() => handleSaveDiscordOpenClawConfig()}
-                    className="block w-full rounded-lg dark:bg-claude-darkSurface/80 bg-claude-surface/80 dark:border-claude-darkBorder/60 border-claude-border/60 border focus:border-claude-accent focus:ring-1 focus:ring-claude-accent/30 dark:text-claude-darkText text-claude-text px-3 py-2 text-sm transition-colors"
-                    placeholder="http://proxy:port"
-                  />
-                </div>
+                {renderProxySettings('discord')}
 
                 {/* Group Policy */}
                 <div className="space-y-1.5">
@@ -2788,9 +2829,9 @@ const IMSettings: React.FC = () => {
               </div>
             </details>
 
-            <div className="pt-1">
-              {renderConnectivityTestButton('discord')}
-            </div>
+              <div className="pt-1">
+                {renderConnectivityTestButton('discord')}
+              </div>
 
             {/* Bot username display */}
             {status.discord.botUsername && (
@@ -2874,6 +2915,7 @@ const IMSettings: React.FC = () => {
             )}
 
             <div className="pt-1">
+              {renderProxySettings('nim')}
               {renderConnectivityTestButton('nim')}
             </div>
 
@@ -2961,6 +3003,7 @@ const IMSettings: React.FC = () => {
             </div>
 
             <div className="pt-1">
+              {renderProxySettings('xiaomifeng')}
               {renderConnectivityTestButton('xiaomifeng')}
             </div>
 
@@ -3045,6 +3088,7 @@ const IMSettings: React.FC = () => {
 
             {/* Connectivity test */}
             <div className="pt-1">
+              {renderProxySettings('weixin')}
               {renderConnectivityTestButton('weixin')}
             </div>
 
@@ -3325,6 +3369,7 @@ const IMSettings: React.FC = () => {
 
             {/* Connectivity test */}
             <div className="pt-1">
+              {renderProxySettings('wecom')}
               {renderConnectivityTestButton('wecom')}
             </div>
 
@@ -3805,6 +3850,7 @@ const IMSettings: React.FC = () => {
 
             {/* Connectivity test */}
             <div className="pt-1">
+              {renderProxySettings('popo')}
               {renderConnectivityTestButton('popo')}
             </div>
 

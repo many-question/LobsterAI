@@ -42,6 +42,7 @@ export interface CoworkMessage {
 // Cowork session
 export interface CoworkSession {
   id: string;
+  threadSeq: number | null;
   title: string;
   claudeSessionId: string | null;
   status: CoworkSessionStatus;
@@ -150,6 +151,7 @@ export interface CoworkPermissionResponse {
 // Session summary for list display (without full messages)
 export interface CoworkSessionSummary {
   id: string;
+  threadSeq: number | null;
   title: string;
   status: CoworkSessionStatus;
   pinned: boolean;
@@ -176,6 +178,27 @@ export interface CoworkContinueOptions {
   systemPrompt?: string;
   activeSkillIds?: string[];
   imageAttachments?: CoworkImageAttachment[];
+}
+
+export interface CoworkSlashCommandDescriptor {
+  name: string;
+  aliases?: string[];
+  description: string;
+  usage: string;
+}
+
+export interface CoworkSlashCommandUiAction {
+  type: 'new_chat' | 'stop_current_session' | 'refresh_model_state' | 'refresh_cowork_config' | 'open_session';
+  sessionId?: string;
+}
+
+export interface CoworkSlashCommandResult {
+  handled: boolean;
+  commandName?: string;
+  ok?: boolean;
+  output?: string;
+  actions?: CoworkSlashCommandUiAction[];
+  commands?: CoworkSlashCommandDescriptor[];
 }
 
 // IPC result types

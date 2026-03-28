@@ -28,6 +28,7 @@ import type {
   OpenClawEngineStatus,
   CoworkStartOptions,
   CoworkContinueOptions,
+  CoworkSlashCommandResult,
 } from '../types/cowork';
 import { i18nService } from './i18n';
 import { classifyErrorKey } from '../../common/coworkErrorClassify';
@@ -318,6 +319,25 @@ class CoworkService {
     }
 
     return true;
+  }
+
+  async executeCommand(options: {
+    input: string;
+    currentSessionId?: string | null;
+    isStreaming?: boolean;
+  }): Promise<CoworkSlashCommandResult | null> {
+    const cowork = window.electron?.cowork;
+    if (!cowork?.executeCommand) {
+      return null;
+    }
+
+    const result = await cowork.executeCommand(options);
+    if (!result.success || !result.result) {
+      console.error('Failed to execute slash command:', result.error);
+      return null;
+    }
+
+    return result.result;
   }
 
   async stopSession(sessionId: string): Promise<boolean> {

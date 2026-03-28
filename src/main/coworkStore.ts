@@ -373,6 +373,7 @@ export interface CoworkMessage {
 
 export interface CoworkSession {
   id: string;
+  threadSeq: number | null;
   title: string;
   claudeSessionId: string | null;
   status: CoworkSessionStatus;
@@ -389,6 +390,7 @@ export interface CoworkSession {
 
 export interface CoworkSessionSummary {
   id: string;
+  threadSeq: number | null;
   title: string;
   status: CoworkSessionStatus;
   pinned: boolean;
@@ -568,17 +570,19 @@ export class CoworkStore {
     agentId: string = 'main'
   ): CoworkSession {
     const id = uuidv4();
+    const threadSeq = this.getNextThreadSequence();
     const now = Date.now();
 
     this.db.run(`
-      INSERT INTO cowork_sessions (id, title, claude_session_id, status, cwd, system_prompt, execution_mode, active_skill_ids, agent_id, pinned, created_at, updated_at)
-      VALUES (?, ?, NULL, 'idle', ?, ?, ?, ?, ?, 0, ?, ?)
-    `, [id, title, cwd, systemPrompt, executionMode, JSON.stringify(activeSkillIds), agentId, now, now]);
+      INSERT INTO cowork_sessions (id, thread_seq, title, claude_session_id, status, cwd, system_prompt, execution_mode, active_skill_ids, agent_id, pinned, created_at, updated_at)
+      VALUES (?, ?, ?, NULL, 'idle', ?, ?, ?, ?, ?, 0, ?, ?)
+    `, [id, threadSeq, title, cwd, systemPrompt, executionMode, JSON.stringify(activeSkillIds), agentId, now, now]);
 
     this.saveDb();
 
     return {
       id,
+      threadSeq,
       title,
       claudeSessionId: null,
       status: 'idle',
@@ -597,6 +601,7 @@ export class CoworkStore {
   getSession(id: string): CoworkSession | null {
     interface SessionRow {
       id: string;
+      thread_seq: number | null;
       title: string;
       claude_session_id: string | null;
       status: string;
@@ -611,7 +616,7 @@ export class CoworkStore {
     }
 
     const row = this.getOne<SessionRow>(`
-      SELECT id, title, claude_session_id, status, pinned, cwd, system_prompt, execution_mode, active_skill_ids, agent_id, created_at, updated_at
+      SELECT id, thread_seq, title, claude_session_id, status, pinned, cwd, system_prompt, execution_mode, active_skill_ids, agent_id, created_at, updated_at
       FROM cowork_sessions
       WHERE id = ?
     `, [id]);
@@ -631,6 +636,7 @@ export class CoworkStore {
 
     return {
       id: row.id,
+      threadSeq: row.thread_seq,
       title: row.title,
       claudeSessionId: row.claude_session_id,
       status: row.status as CoworkSessionStatus,
@@ -715,6 +721,7 @@ export class CoworkStore {
   listSessions(agentId?: string): CoworkSessionSummary[] {
     interface SessionSummaryRow {
       id: string;
+      thread_seq: number | null;
       title: string;
       status: string;
       pinned: number | null;
@@ -726,14 +733,14 @@ export class CoworkStore {
     let rows: SessionSummaryRow[];
     if (agentId) {
       rows = this.getAll<SessionSummaryRow>(`
-        SELECT id, title, status, pinned, agent_id, created_at, updated_at
+        SELECT id, thread_seq, title, status, pinned, agent_id, created_at, updated_at
         FROM cowork_sessions
         WHERE agent_id = ?
         ORDER BY pinned DESC, updated_at DESC
       `, [agentId]);
     } else {
       rows = this.getAll<SessionSummaryRow>(`
-        SELECT id, title, status, pinned, agent_id, created_at, updated_at
+        SELECT id, thread_seq, title, status, pinned, agent_id, created_at, updated_at
         FROM cowork_sessions
         ORDER BY pinned DESC, updated_at DESC
       `);
@@ -741,6 +748,7 @@ export class CoworkStore {
 
     return rows.map(row => ({
       id: row.id,
+      threadSeq: row.thread_seq,
       title: row.title,
       status: row.status as CoworkSessionStatus,
       pinned: Boolean(row.pinned),
@@ -748,6 +756,17 @@ export class CoworkStore {
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     }));
+  }
+
+  private getNextThreadSequence(): number {
+    const result = this.getOne<{ max_thread_seq: number | null }>(`
+      SELECT MAX(thread_seq) AS max_thread_seq
+      FROM cowork_sessions
+    `);
+    const currentMax = typeof result?.max_thread_seq === 'number' && Number.isFinite(result.max_thread_seq)
+      ? result.max_thread_seq
+      : 0;
+    return currentMax + 1;
   }
 
   resetRunningSessions(): number {

@@ -31,6 +31,7 @@ import {
   DEFAULT_WEIXIN_CONFIG,
   DEFAULT_IM_SETTINGS,
 } from './types';
+import { normalizeProxyConfig } from '../../shared/proxy';
 
 interface StoredConversationReplyRoute {
   channel: string;
@@ -376,17 +377,22 @@ export class IMStore {
       return merged;
     };
 
+    const normalizeProxy = <T extends { proxy?: unknown }>(value: T): T => ({
+      ...value,
+      proxy: normalizeProxyConfig(value.proxy as any),
+    });
+
     return {
-      dingtalk: resolveEnabled(dingtalk, DEFAULT_DINGTALK_OPENCLAW_CONFIG),
-      feishu: resolveEnabled(feishu, DEFAULT_FEISHU_OPENCLAW_CONFIG),
-      telegram: resolveEnabled(telegram, DEFAULT_TELEGRAM_OPENCLAW_CONFIG),
-      discord: resolveEnabled(discord, DEFAULT_DISCORD_OPENCLAW_CONFIG),
-      nim: resolveEnabled(nim, DEFAULT_NIM_CONFIG),
-      xiaomifeng: resolveEnabled(xiaomifeng, DEFAULT_XIAOMIFENG_CONFIG),
-      qq: resolveEnabled(qq, DEFAULT_QQ_CONFIG),
-      wecom: resolveEnabled(wecom, DEFAULT_WECOM_CONFIG),
-      popo: resolveEnabled(popo, DEFAULT_POPO_CONFIG),
-      weixin: resolveEnabled(weixin, DEFAULT_WEIXIN_CONFIG),
+      dingtalk: normalizeProxy(resolveEnabled(dingtalk, DEFAULT_DINGTALK_OPENCLAW_CONFIG)),
+      feishu: normalizeProxy(resolveEnabled(feishu, DEFAULT_FEISHU_OPENCLAW_CONFIG)),
+      telegram: normalizeProxy(resolveEnabled(telegram, DEFAULT_TELEGRAM_OPENCLAW_CONFIG)),
+      discord: normalizeProxy(resolveEnabled(discord, DEFAULT_DISCORD_OPENCLAW_CONFIG)),
+      nim: normalizeProxy(resolveEnabled(nim, DEFAULT_NIM_CONFIG)),
+      xiaomifeng: normalizeProxy(resolveEnabled(xiaomifeng, DEFAULT_XIAOMIFENG_CONFIG)),
+      qq: normalizeProxy(resolveEnabled(qq, DEFAULT_QQ_CONFIG)),
+      wecom: normalizeProxy(resolveEnabled(wecom, DEFAULT_WECOM_CONFIG)),
+      popo: normalizeProxy(resolveEnabled(popo, DEFAULT_POPO_CONFIG)),
+      weixin: normalizeProxy(resolveEnabled(weixin, DEFAULT_WEIXIN_CONFIG)),
       settings: { ...DEFAULT_IM_SETTINGS, ...settings },
     };
   }

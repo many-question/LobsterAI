@@ -10,6 +10,7 @@ import { parseChannelSessionKey } from './openclawChannelSessionSync';
 import type { McpToolManifestEntry } from './mcpServerManager';
 import { hasBundledOpenClawExtension } from './openclawLocalExtensions';
 import { buildScheduledTaskEnginePrompt } from '../../scheduled-task/enginePrompt';
+import { normalizeProxyConfig } from '../../shared/proxy';
 
 export type McpBridgeConfig = {
   callbackUrl: string;
@@ -43,6 +44,14 @@ const normalizeModelName = (modelId: string): string => {
   if (!trimmed) return 'default-model';
   const slashIndex = trimmed.lastIndexOf('/');
   return slashIndex >= 0 ? trimmed.slice(slashIndex + 1) : trimmed;
+};
+
+const toOpenClawChannelProxy = (proxy: unknown): string | undefined => {
+  const normalized = normalizeProxyConfig(proxy as any);
+  if (normalized.mode === 'custom' && normalized.url) {
+    return normalized.url;
+  }
+  return undefined;
 };
 
 
@@ -726,8 +735,9 @@ export class OpenClawConfigSync {
         streaming: tgConfig.streaming || 'off',
         mediaMaxMb: tgConfig.mediaMaxMb || 5,
       };
-      if (tgConfig.proxy) {
-        telegramChannel.proxy = tgConfig.proxy;
+      const telegramProxy = toOpenClawChannelProxy(tgConfig.proxy);
+      if (telegramProxy) {
+        telegramChannel.proxy = telegramProxy;
       }
       if (tgConfig.webhookUrl) {
         telegramChannel.webhookUrl = tgConfig.webhookUrl;
@@ -780,8 +790,9 @@ export class OpenClawConfigSync {
         streaming: dcConfig.streaming || 'off',
         mediaMaxMb: dcConfig.mediaMaxMb || 25,
       };
-      if (dcConfig.proxy) {
-        discordChannel.proxy = dcConfig.proxy;
+      const discordProxy = toOpenClawChannelProxy(dcConfig.proxy);
+      if (discordProxy) {
+        discordChannel.proxy = discordProxy;
       }
       managedConfig.channels = { ...(managedConfig.channels as Record<string, unknown> || {}), discord: discordChannel };
     }

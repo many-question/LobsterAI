@@ -2,6 +2,7 @@ import { join } from 'path';
 import { app } from 'electron';
 import type { SqliteStore } from '../sqliteStore';
 import type { CoworkApiConfig } from './coworkConfigStore';
+import { defaultConfig as rendererDefaultConfig } from '../../renderer/config';
 import {
   configureCoworkOpenAICompatProxy,
   type OpenAICompatProxyTarget,
@@ -9,6 +10,8 @@ import {
   getCoworkOpenAICompatProxyStatus,
 } from './coworkOpenAICompatProxy';
 import { normalizeProviderApiFormat, type AnthropicApiFormat } from './coworkFormatTransform';
+import type { ProxyConfig } from '../../shared/proxy';
+import { normalizeProxyConfig } from '../../shared/proxy';
 
 const ZHIPU_CODING_PLAN_BASE_URL = 'https://open.bigmodel.cn/api/coding/paas/v4';
 // Qwen Coding Plan 专属端点 (OpenAI 兼容和 Anthropic 兼容)
@@ -23,6 +26,7 @@ const MOONSHOT_CODING_PLAN_ANTHROPIC_BASE_URL = 'https://api.kimi.com/coding';
 
 type ProviderModel = {
   id: string;
+  name?: string;
   supportsImage?: boolean;
 };
 
@@ -30,22 +34,34 @@ type ProviderConfig = {
   enabled: boolean;
   apiKey: string;
   baseUrl: string;
+  proxy?: ProxyConfig;
   apiFormat?: 'anthropic' | 'openai' | 'native';
+  requiresApiKey?: boolean;
   codingPlanEnabled?: boolean;
   models?: ProviderModel[];
 };
 
 type AppConfig = {
   model?: {
+    availableModels?: ProviderModel[];
     defaultModel?: string;
     defaultModelProvider?: string;
   };
   providers?: Record<string, ProviderConfig>;
 };
 
+export type AvailableModelDescriptor = {
+  id: string;
+  name: string;
+  providerKey: string;
+  supportsImage?: boolean;
+  supportsTools?: boolean;
+};
+
 export type ApiConfigResolution = {
   config: CoworkApiConfig | null;
   error?: string;
+  proxy?: ProxyConfig;
   providerMetadata?: {
     providerName: string;
     codingPlanEnabled: boolean;
@@ -119,8 +135,52 @@ type MatchedProvider = {
   modelId: string;
   apiFormat: AnthropicApiFormat;
   baseURL: string;
+  proxy: ProxyConfig;
   supportsImage?: boolean;
 };
+
+function buildMergedProviders(appConfig?: AppConfig | null): Record<string, ProviderConfig> {
+  const defaultProviders = (rendererDefaultConfig.providers ?? {}) as Record<string, ProviderConfig>;
+  const storedProviders = appConfig?.providers ?? {};
+  return Object.fromEntries(
+    Object.entries({
+      ...defaultProviders,
+      ...storedProviders,
+    }).map(([providerKey, providerConfig]) => [
+      providerKey,
+      (() => {
+        const mergedProvider = {
+          ...(defaultProviders[providerKey] ?? {}),
+          ...(providerConfig ?? {}),
+        } as Partial<ProviderConfig>;
+
+        return {
+          enabled: mergedProvider.enabled ?? false,
+          apiKey: mergedProvider.apiKey ?? '',
+          baseUrl: mergedProvider.baseUrl ?? '',
+          proxy: normalizeProxyConfig(mergedProvider.proxy),
+          apiFormat: mergedProvider.apiFormat,
+          requiresApiKey: mergedProvider.requiresApiKey,
+          codingPlanEnabled: mergedProvider.codingPlanEnabled,
+          models: mergedProvider.models ?? [],
+        } satisfies ProviderConfig;
+      })(),
+    ])
+  );
+}
+
+function getEffectiveAppConfig(appConfig?: AppConfig | null): AppConfig {
+  return {
+    ...appConfig,
+    model: {
+      availableModels: rendererDefaultConfig.model.availableModels,
+      defaultModel: rendererDefaultConfig.model.defaultModel,
+      defaultModelProvider: rendererDefaultConfig.model.defaultModelProvider,
+      ...(appConfig?.model ?? {}),
+    },
+    providers: buildMergedProviders(appConfig),
+  };
+}
 
 function getEffectiveProviderApiFormat(providerName: string, apiFormat: unknown): AnthropicApiFormat {
   if (providerName === 'openai' || providerName === 'gemini' || providerName === 'stepfun' || providerName === 'youdaozhiyun') {
@@ -132,8 +192,11 @@ function getEffectiveProviderApiFormat(providerName: string, apiFormat: unknown)
   return normalizeProviderApiFormat(apiFormat);
 }
 
-function providerRequiresApiKey(providerName: string): boolean {
-  return providerName !== 'ollama';
+function providerRequiresApiKey(providerConfig: ProviderConfig | undefined, providerName?: string): boolean {
+  if (typeof providerConfig?.requiresApiKey === 'boolean') {
+    return providerConfig.requiresApiKey;
+  }
+  return providerName !== 'ollama' && providerName !== 'lmstudio';
 }
 
 function tryLobsteraiServerFallback(modelId?: string): MatchedProvider | null {
@@ -147,10 +210,18 @@ function tryLobsteraiServerFallback(modelId?: string): MatchedProvider | null {
   console.log('[ClaudeSettings] lobsterai-server fallback activated:', { baseURL, modelId: effectiveModelId, supportsImage: cachedMeta?.supportsImage });
   return {
     providerName: 'lobsterai-server',
-    providerConfig: { enabled: true, apiKey: tokens.accessToken, baseUrl: baseURL, apiFormat: 'openai', models: [{ id: effectiveModelId, supportsImage: cachedMeta?.supportsImage }] },
+    providerConfig: {
+      enabled: true,
+      apiKey: tokens.accessToken,
+      baseUrl: baseURL,
+      proxy: normalizeProxyConfig(undefined),
+      apiFormat: 'openai',
+      models: [{ id: effectiveModelId, supportsImage: cachedMeta?.supportsImage }],
+    },
     modelId: effectiveModelId,
     apiFormat: 'openai',
     baseURL,
+    proxy: normalizeProxyConfig(undefined),
     supportsImage: cachedMeta?.supportsImage,
   };
 }
@@ -283,7 +354,7 @@ function resolveMatchedProvider(appConfig: AppConfig): { matched: MatchedProvide
     return { matched: null, error: `Provider ${providerName} is missing base URL.` };
   }
 
-  if (apiFormat === 'anthropic' && providerRequiresApiKey(providerName) && !providerConfig.apiKey?.trim()) {
+  if (apiFormat === 'anthropic' && providerRequiresApiKey(providerConfig, providerName) && !providerConfig.apiKey?.trim()) {
     const serverFallback = tryLobsteraiServerFallback(modelId);
     if (serverFallback) return { matched: serverFallback };
     return { matched: null, error: `Provider ${providerName} requires API key for Anthropic-compatible mode.` };
@@ -298,8 +369,211 @@ function resolveMatchedProvider(appConfig: AppConfig): { matched: MatchedProvide
       modelId,
       apiFormat,
       baseURL,
+      proxy: normalizeProxyConfig(providerConfig.proxy),
       supportsImage: matchedModel?.supportsImage,
     },
+  };
+}
+
+function getStoredAppConfig(): AppConfig | null {
+  const sqliteStore = getStore();
+  if (!sqliteStore) {
+    return null;
+  }
+  return getEffectiveAppConfig(sqliteStore.get<AppConfig>('app_config'));
+}
+
+function listEnabledProviderModels(appConfig: AppConfig): AvailableModelDescriptor[] {
+  const providers = appConfig.providers ?? {};
+  const entries: AvailableModelDescriptor[] = [];
+
+  for (const [providerKey, providerConfig] of Object.entries(providers)) {
+    if (!providerConfig?.enabled || !Array.isArray(providerConfig.models)) {
+      continue;
+    }
+
+    for (const model of providerConfig.models) {
+      const modelId = model.id?.trim();
+      if (!modelId) continue;
+      entries.push({
+        id: modelId,
+        name: model.name?.trim() || modelId,
+        providerKey,
+        supportsImage: model.supportsImage,
+        supportsTools: undefined,
+      });
+    }
+  }
+
+  return entries;
+}
+
+export function listAvailableConfiguredModels(): AvailableModelDescriptor[] {
+  const appConfig = getStoredAppConfig();
+  if (!appConfig) {
+    return [];
+  }
+  return listEnabledProviderModels(appConfig);
+}
+
+export function getCurrentModelSelection(): AvailableModelDescriptor | null {
+  const appConfig = getStoredAppConfig();
+  if (!appConfig) {
+    return null;
+  }
+
+  const { matched } = resolveMatchedProvider(appConfig);
+  if (!matched) {
+    return null;
+  }
+
+  return {
+    id: matched.modelId,
+    name: matched.providerConfig.models?.find((model) => model.id === matched.modelId)?.name || matched.modelId,
+    providerKey: matched.providerName,
+    supportsImage: matched.supportsImage,
+    supportsTools: undefined,
+  };
+}
+
+export function setCurrentModelSelection(input: {
+  modelId: string;
+  providerKey?: string;
+}): { selected: AvailableModelDescriptor | null; error?: string } {
+  const sqliteStore = getStore();
+  if (!sqliteStore) {
+    return { selected: null, error: 'Store is not initialized.' };
+  }
+
+  const appConfig = getEffectiveAppConfig(sqliteStore.get<AppConfig>('app_config'));
+  if (!appConfig) {
+    return { selected: null, error: 'Application config not found.' };
+  }
+
+  const modelId = input.modelId?.trim();
+  if (!modelId) {
+    return { selected: null, error: 'Model id is required.' };
+  }
+
+  const providers = appConfig.providers ?? {};
+  const normalizedProviderKey = input.providerKey?.trim();
+  let providerEntry: [string, ProviderConfig] | undefined;
+
+  if (normalizedProviderKey) {
+    const providerConfig = providers[normalizedProviderKey];
+    if (providerConfig?.enabled && providerConfig.models?.some((model) => model.id === modelId)) {
+      providerEntry = [normalizedProviderKey, providerConfig];
+    } else {
+      return {
+        selected: null,
+        error: `Model ${modelId} is not enabled under provider ${normalizedProviderKey}.`,
+      };
+    }
+  }
+
+  if (!providerEntry) {
+    providerEntry = Object.entries(providers).find(([, providerConfig]) => {
+      if (!providerConfig?.enabled || !Array.isArray(providerConfig.models)) {
+        return false;
+      }
+      return providerConfig.models.some((model) => model.id === modelId);
+    });
+  }
+
+  if (!providerEntry) {
+    return {
+      selected: null,
+      error: `No enabled provider found for model: ${modelId}`,
+    };
+  }
+
+  const [providerKey, providerConfig] = providerEntry;
+  const matchedModel = providerConfig.models?.find((model) => model.id === modelId);
+  if (!matchedModel) {
+    return {
+      selected: null,
+      error: `Model not found: ${modelId}`,
+    };
+  }
+
+  const nextConfig: AppConfig = {
+    ...appConfig,
+    model: {
+      ...(appConfig.model ?? {}),
+      defaultModel: modelId,
+      defaultModelProvider: providerKey,
+    },
+  };
+
+  sqliteStore.set('app_config', nextConfig);
+
+  return {
+    selected: {
+      id: modelId,
+      name: matchedModel.name?.trim() || modelId,
+      providerKey,
+      supportsImage: matchedModel.supportsImage,
+      supportsTools: undefined,
+    },
+  };
+}
+
+export function getModelDebugSnapshot(): {
+  stored: {
+    defaultModel: string | null;
+    defaultModelProvider: string | null;
+    fallbackModelIds: string[];
+    enabledProviders: Array<{
+      providerKey: string;
+      enabled: boolean;
+      baseUrl: string;
+      apiFormat?: string;
+      modelIds: string[];
+    }>;
+  };
+  effective: {
+    defaultModel: string | null;
+    defaultModelProvider: string | null;
+    fallbackModelIds: string[];
+    enabledProviders: Array<{
+      providerKey: string;
+      enabled: boolean;
+      baseUrl: string;
+      apiFormat?: string;
+      modelIds: string[];
+    }>;
+  };
+  currentSelection: AvailableModelDescriptor | null;
+} {
+  const appConfig = getStoredAppConfig();
+  const providers = appConfig?.providers ?? {};
+  const enabledProviders = Object.entries(providers)
+    .filter(([, providerConfig]) => providerConfig?.enabled)
+    .map(([providerKey, providerConfig]) => ({
+      providerKey,
+      enabled: !!providerConfig.enabled,
+      baseUrl: providerConfig.baseUrl?.trim() || '',
+      apiFormat: providerConfig.apiFormat,
+      modelIds: (providerConfig.models ?? []).map((model) => model.id).filter(Boolean),
+    }));
+
+  const fallbackModelIds = listEnabledProviderModels(appConfig ?? {}).map((model) => model.id);
+  const currentSelection = getCurrentModelSelection();
+
+  return {
+    stored: {
+      defaultModel: appConfig?.model?.defaultModel?.trim() || null,
+      defaultModelProvider: appConfig?.model?.defaultModelProvider?.trim() || null,
+      fallbackModelIds,
+      enabledProviders,
+    },
+    effective: {
+      defaultModel: currentSelection?.id ?? null,
+      defaultModelProvider: currentSelection?.providerKey ?? null,
+      fallbackModelIds,
+      enabledProviders,
+    },
+    currentSelection,
   };
 }
 
@@ -317,6 +591,7 @@ export function resolveCurrentApiConfig(target: OpenAICompatProxyTarget = 'local
     return {
       config: null,
       error: 'Application config not found.',
+      proxy: normalizeProxyConfig(undefined),
     };
   }
 
@@ -325,6 +600,7 @@ export function resolveCurrentApiConfig(target: OpenAICompatProxyTarget = 'local
     return {
       config: null,
       error,
+      proxy: normalizeProxyConfig(undefined),
     };
   }
 
@@ -334,7 +610,7 @@ export function resolveCurrentApiConfig(target: OpenAICompatProxyTarget = 'local
   // placeholder so downstream components (OpenClaw gateway, compat proxy)
   // don't reject the request with "No API key found for provider".
   const effectiveApiKey = resolvedApiKey
-    || (!providerRequiresApiKey(matched.providerName) ? 'sk-lobsterai-local' : '');
+    || (!providerRequiresApiKey(matched.providerConfig, matched.providerName) ? 'sk-lobsterai-local' : '');
 
   if (matched.apiFormat === 'anthropic') {
     return {
@@ -344,6 +620,7 @@ export function resolveCurrentApiConfig(target: OpenAICompatProxyTarget = 'local
         model: matched.modelId,
         apiType: 'anthropic',
       },
+      proxy: matched.proxy,
       providerMetadata: {
         providerName: matched.providerName,
         codingPlanEnabled: !!matched.providerConfig.codingPlanEnabled,
@@ -365,6 +642,7 @@ export function resolveCurrentApiConfig(target: OpenAICompatProxyTarget = 'local
     apiKey: resolvedApiKey || undefined,
     model: matched.modelId,
     provider: matched.providerName,
+    proxy: matched.proxy,
   });
 
   const proxyBaseURL = getCoworkOpenAICompatProxyBaseURL(target);
@@ -372,6 +650,7 @@ export function resolveCurrentApiConfig(target: OpenAICompatProxyTarget = 'local
     return {
       config: null,
       error: 'OpenAI compatibility proxy base URL is unavailable.',
+      proxy: matched.proxy,
     };
   }
 
@@ -382,9 +661,11 @@ export function resolveCurrentApiConfig(target: OpenAICompatProxyTarget = 'local
       model: matched.modelId,
       apiType: 'openai',
     },
+    proxy: matched.proxy,
     providerMetadata: {
       providerName: matched.providerName,
       codingPlanEnabled: !!matched.providerConfig.codingPlanEnabled,
+      supportsImage: matched.supportsImage,
     },
   };
 }
@@ -403,13 +684,13 @@ export function resolveRawApiConfig(): ApiConfigResolution {
   if (!sqliteStore) {
     return { config: null, error: 'Store is not initialized.' };
   }
-  const appConfig = sqliteStore.get<AppConfig>('app_config');
+  const appConfig = getEffectiveAppConfig(sqliteStore.get<AppConfig>('app_config'));
   if (!appConfig) {
-    return { config: null, error: 'Application config not found.' };
+    return { config: null, error: 'Application config not found.', proxy: normalizeProxyConfig(undefined) };
   }
   const { matched, error } = resolveMatchedProvider(appConfig);
   if (!matched) {
-    return { config: null, error };
+    return { config: null, error, proxy: normalizeProxyConfig(undefined) };
   }
   const apiKey = matched.providerConfig.apiKey?.trim() || '';
   // OpenClaw's gateway requires a non-empty apiKey for every provider — even
@@ -417,7 +698,7 @@ export function resolveRawApiConfig(): ApiConfigResolution {
   // leaves the key blank we supply a placeholder so the gateway doesn't reject
   // the request with "No API key found for provider".
   const effectiveApiKey = apiKey
-    || (!providerRequiresApiKey(matched.providerName) ? 'sk-lobsterai-local' : '');
+    || (!providerRequiresApiKey(matched.providerConfig, matched.providerName) ? 'sk-lobsterai-local' : '');
   return {
     config: {
       apiKey: effectiveApiKey,
@@ -425,6 +706,7 @@ export function resolveRawApiConfig(): ApiConfigResolution {
       model: matched.modelId,
       apiType: matched.apiFormat === 'anthropic' ? 'anthropic' : 'openai',
     },
+    proxy: matched.proxy,
     providerMetadata: {
       providerName: matched.providerName,
       codingPlanEnabled: !!matched.providerConfig.codingPlanEnabled,
@@ -459,7 +741,7 @@ export function resolveAllProviderApiKeys(): Record<string, string> {
   for (const [providerName, providerConfig] of Object.entries(appConfig.providers)) {
     if (!providerConfig?.enabled) continue;
     const apiKey = providerConfig.apiKey?.trim();
-    if (!apiKey && providerRequiresApiKey(providerName)) continue;
+    if (!apiKey && providerRequiresApiKey(providerConfig, providerName)) continue;
     const envName = providerName.toUpperCase().replace(/[^A-Z0-9]/g, '_');
     result[envName] = apiKey || 'sk-lobsterai-local';
   }

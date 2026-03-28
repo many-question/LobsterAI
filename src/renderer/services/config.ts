@@ -1,5 +1,6 @@
 import { AppConfig, CONFIG_KEYS, defaultConfig } from '../config';
 import { localStore } from './store';
+import { normalizeProxyConfig } from '../../shared/proxy';
 
 const getFixedProviderApiFormat = (providerKey: string): 'anthropic' | 'openai' | null => {
   if (providerKey === 'openai' || providerKey === 'gemini' || providerKey === 'stepfun' || providerKey === 'youdaozhiyun') {
@@ -61,6 +62,7 @@ const normalizeProvidersConfig = (providers: AppConfig['providers']): AppConfig[
         ...providerConfig,
         baseUrl: normalizeProviderBaseUrl(providerKey, providerConfig.baseUrl),
         apiFormat: normalizeProviderApiFormat(providerKey, providerConfig.apiFormat),
+        proxy: normalizeProxyConfig(providerConfig.proxy),
       },
     ])
   ) as AppConfig['providers'];
@@ -128,6 +130,7 @@ class ConfigService {
                     ...mergedProvider,
                     baseUrl: normalizeProviderBaseUrl(providerKey, mergedProvider.baseUrl),
                     apiFormat: normalizeProviderApiFormat(providerKey, mergedProvider.apiFormat),
+                    proxy: normalizeProxyConfig(mergedProvider.proxy),
                   };
                 })(),
               ])

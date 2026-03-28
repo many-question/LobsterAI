@@ -49,6 +49,7 @@ contextBridge.exposeInMainWorld('electron', {
       method: string;
       headers: Record<string, string>;
       body?: string;
+      proxy?: { mode?: 'inherit' | 'direct' | 'custom'; url?: string };
     }) => ipcRenderer.invoke('api:fetch', options),
 
     // 流式 API 请求
@@ -58,6 +59,7 @@ contextBridge.exposeInMainWorld('electron', {
       headers: Record<string, string>;
       body?: string;
       requestId: string;
+      proxy?: { mode?: 'inherit' | 'direct' | 'custom'; url?: string };
     }) => ipcRenderer.invoke('api:stream', options),
 
     // 取消流式请求
@@ -170,6 +172,8 @@ contextBridge.exposeInMainWorld('electron', {
       ipcRenderer.invoke('cowork:session:start', options),
     continueSession: (options: { sessionId: string; prompt: string; systemPrompt?: string; activeSkillIds?: string[]; imageAttachments?: Array<{ name: string; mimeType: string; base64Data: string }> }) =>
       ipcRenderer.invoke('cowork:session:continue', options),
+    executeCommand: (options: { input: string; currentSessionId?: string | null; isStreaming?: boolean }) =>
+      ipcRenderer.invoke('cowork:command:execute', options),
     stopSession: (sessionId: string) =>
       ipcRenderer.invoke('cowork:session:stop', sessionId),
     deleteSession: (sessionId: string) =>

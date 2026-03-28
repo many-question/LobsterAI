@@ -3,12 +3,15 @@
  * Mirrors src/main/im/types.ts for use in React components
  */
 
+import type { ProxyConfig } from '../../shared/proxy';
+
 // ==================== DingTalk Types ====================
 
 export interface DingTalkOpenClawConfig {
   enabled: boolean;
   clientId: string;
   clientSecret: string;
+  proxy?: ProxyConfig;
   dmPolicy: 'open' | 'pairing' | 'allowlist';
   allowFrom: string[];
   groupPolicy: 'open' | 'allowlist';
@@ -41,6 +44,7 @@ export interface FeishuOpenClawConfig {
   enabled: boolean;
   appId: string;
   appSecret: string;
+  proxy?: ProxyConfig;
   domain: 'feishu' | 'lark' | string;
   dmPolicy: 'pairing' | 'allowlist' | 'open' | 'disabled';
   allowFrom: string[];
@@ -94,7 +98,7 @@ export interface TelegramOpenClawConfig {
   linkPreview: boolean;
   streaming: 'off' | 'partial' | 'block' | 'progress';
   mediaMaxMb: number;
-  proxy: string;
+  proxy?: ProxyConfig;
   webhookUrl: string;
   webhookSecret: string;
   debug: boolean;
@@ -119,7 +123,7 @@ export interface DiscordOpenClawConfig {
   historyLimit: number;
   streaming: 'off' | 'partial' | 'block' | 'progress';
   mediaMaxMb: number;
-  proxy: string;
+  proxy?: ProxyConfig;
   debug: boolean;
 }
 
@@ -163,6 +167,7 @@ export interface NimConfig {
   appKey: string;
   account: string;
   token: string;
+  proxy?: ProxyConfig;
   p2p?: NimP2pConfig;
   team?: NimTeamConfig;
   qchat?: NimQChatConfig;
@@ -196,6 +201,10 @@ export interface XiaomifengGatewayStatus {
   lastOutboundAt: number | null;
 }
 
+export interface XiaomifengConfig {
+  proxy?: ProxyConfig;
+}
+
 // ==================== QQ Types ====================
 
 export interface QQOpenClawConfig {
@@ -214,6 +223,10 @@ export interface QQOpenClawConfig {
 
 /** @deprecated Use QQOpenClawConfig instead */
 export type QQConfig = QQOpenClawConfig;
+
+export interface QQOpenClawConfig {
+  proxy?: ProxyConfig;
+}
 
 export interface QQGatewayStatus {
   connected: boolean;
@@ -239,6 +252,10 @@ export interface WecomOpenClawConfig {
 
 /** @deprecated Use WecomOpenClawConfig instead */
 export type WecomConfig = WecomOpenClawConfig;
+
+export interface WecomOpenClawConfig {
+  proxy?: ProxyConfig;
+}
 
 export interface WecomGatewayStatus {
   connected: boolean;
@@ -278,6 +295,10 @@ export interface PopoGatewayStatus {
   lastOutboundAt: number | null;
 }
 
+export interface PopoOpenClawConfig {
+  proxy?: ProxyConfig;
+}
+
 // ==================== Weixin (微信) Types ====================
 
 export interface WeixinOpenClawConfig {
@@ -296,6 +317,10 @@ export interface WeixinGatewayStatus {
   lastError: string | null;
   lastInboundAt: number | null;
   lastOutboundAt: number | null;
+}
+
+export interface WeixinOpenClawConfig {
+  proxy?: ProxyConfig;
 }
 
 // ==================== Common IM Types ====================
@@ -448,6 +473,7 @@ export const DEFAULT_DINGTALK_OPENCLAW_CONFIG: DingTalkOpenClawConfig = {
   enabled: false,
   clientId: '',
   clientSecret: '',
+  proxy: { mode: 'inherit' },
   dmPolicy: 'open',
   allowFrom: [],
   groupPolicy: 'open',
@@ -463,6 +489,7 @@ export const DEFAULT_FEISHU_OPENCLAW_CONFIG: FeishuOpenClawConfig = {
   enabled: false,
   appId: '',
   appSecret: '',
+  proxy: { mode: 'inherit' },
   domain: 'feishu',
   dmPolicy: 'open',
   allowFrom: [],
@@ -486,7 +513,7 @@ export const DEFAULT_DISCORD_OPENCLAW_CONFIG: DiscordOpenClawConfig = {
   historyLimit: 50,
   streaming: 'off',
   mediaMaxMb: 25,
-  proxy: '',
+  proxy: { mode: 'inherit' },
   debug: false,
 };
 
@@ -495,12 +522,14 @@ export const DEFAULT_NIM_CONFIG: NimConfig = {
   appKey: '',
   account: '',
   token: '',
+  proxy: { mode: 'inherit' },
 };
 
 export const DEFAULT_XIAOMIFENG_CONFIG: XiaomifengConfig = {
   enabled: false,
   clientId: '',
   secret: '',
+  proxy: { mode: 'inherit' },
   debug: true,
 };
 
@@ -517,7 +546,7 @@ export const DEFAULT_TELEGRAM_OPENCLAW_CONFIG: TelegramOpenClawConfig = {
   linkPreview: true,
   streaming: 'partial',
   mediaMaxMb: 100,
-  proxy: '',
+  proxy: { mode: 'inherit' },
   webhookUrl: '',
   webhookSecret: '',
   debug: false,
@@ -527,6 +556,7 @@ export const DEFAULT_QQ_CONFIG: QQOpenClawConfig = {
   enabled: false,
   appId: '',
   appSecret: '',
+  proxy: { mode: 'inherit' },
   dmPolicy: 'open',
   allowFrom: [],
   groupPolicy: 'open',
@@ -541,6 +571,7 @@ export const DEFAULT_WECOM_CONFIG: WecomOpenClawConfig = {
   enabled: false,
   botId: '',
   secret: '',
+  proxy: { mode: 'inherit' },
   dmPolicy: 'open',
   allowFrom: [],
   groupPolicy: 'open',
@@ -556,6 +587,7 @@ export const DEFAULT_POPO_CONFIG: PopoOpenClawConfig = {
   appSecret: '',
   token: '',
   aesKey: '',
+  proxy: { mode: 'inherit' },
   webhookBaseUrl: '',
   webhookPath: '/popo/callback',
   webhookPort: 3100,
@@ -571,6 +603,7 @@ export const DEFAULT_POPO_CONFIG: PopoOpenClawConfig = {
 export const DEFAULT_WEIXIN_CONFIG: WeixinOpenClawConfig = {
   enabled: false,
   accountId: '',
+  proxy: { mode: 'inherit' },
   dmPolicy: 'open',
   allowFrom: [],
   groupPolicy: 'open',

@@ -7,6 +7,8 @@
 import { EventEmitter } from 'events';
 import * as path from 'path';
 import { t } from '../i18n';
+import { executeCoworkSlashCommand } from '../libs/coworkSlashCommands';
+import { getCoworkSlashCommandStatusSnapshot } from '../libs/coworkStatus';
 import { NimGateway } from './nimGateway';
 import { XiaomifengGateway } from './xiaomifengGateway';
 import { IMChatHandler } from './imChatHandler';
@@ -38,6 +40,8 @@ import type { Database } from 'sql.js';
 import type { CoworkRuntime } from '../libs/agentEngine/types';
 import type { CoworkStore } from '../coworkStore';
 import { classifyErrorKey } from '../../common/coworkErrorClassify';
+import type { ProxyConfig } from '../../shared/proxy';
+import { withTemporaryProxyEnv } from '../libs/networkProxy';
 const CONNECTIVITY_TIMEOUT_MS = 10_000;
 const INBOUND_ACTIVITY_WARN_AFTER_MS = 2 * 60 * 1000;
 
@@ -65,6 +69,8 @@ interface DiscordUserResponse {
   username?: string;
   discriminator?: string;
 }
+
+type IMPlatformProxyConfig = { proxy?: ProxyConfig };
 
 export interface IMGatewayManagerOptions {
   coworkRuntime?: CoworkRuntime;
@@ -226,6 +232,12 @@ export class IMGatewayManager extends EventEmitter {
       this.persistNotificationTarget(message.platform);
 
       try {
+        const slashCommandResponse = await this.handleSlashCommand(message);
+        if (slashCommandResponse !== null) {
+          await replyFn(slashCommandResponse);
+          return;
+        }
+
         let response: string;
 
         // Always use Cowork mode if handler is available
@@ -268,6 +280,51 @@ export class IMGatewayManager extends EventEmitter {
 
     this.nimGateway.setMessageCallback(messageHandler);
     this.xiaomifengGateway.setMessageCallback(messageHandler);
+  }
+
+  private async handleSlashCommand(message: IMMessage): Promise<string | null> {
+    if (!message.content.trim().startsWith('/')) {
+      return null;
+    }
+
+    if (!this.coworkStore) {
+      return 'Slash commands require Cowork to be initialized.';
+    }
+
+    const currentSessionId = this.imStore.getSessionMapping(message.conversationId, message.platform)?.coworkSessionId ?? null;
+    const result = await executeCoworkSlashCommand(message.content, {
+      currentSessionId,
+      isStreaming: currentSessionId ? (this.coworkRuntime?.isSessionActive(currentSessionId) ?? false) : false,
+      configStore: {
+        getConfig: () => this.coworkStore!.getConfig(),
+        setConfig: (config) => this.coworkStore!.setConfig(config),
+        getSession: (sessionId) => this.coworkStore!.getSession(sessionId),
+        listSessions: () => this.coworkStore!.listSessions(),
+      },
+      getStatusSnapshot: () => getCoworkSlashCommandStatusSnapshot({
+        config: this.coworkStore.getConfig(),
+        session: currentSessionId ? this.coworkStore.getSession(currentSessionId) : null,
+        runtime: this.coworkRuntime,
+      }),
+    });
+
+    if (!result.handled) {
+      return null;
+    }
+
+    for (const action of result.actions ?? []) {
+      if (action.type === 'stop_current_session' && this.coworkHandler) {
+        this.coworkHandler.stopConversationSession(message.conversationId, message.platform);
+      }
+      if (action.type === 'new_chat' && this.coworkHandler) {
+        this.coworkHandler.stopConversationSession(message.conversationId, message.platform, { clearMapping: true });
+      }
+      if (action.type === 'open_session' && action.sessionId && this.coworkHandler) {
+        this.coworkHandler.switchConversationSession(message.conversationId, message.platform, action.sessionId);
+      }
+    }
+
+    return result.output ?? `/${result.commandName ?? 'command'} handled.`;
   }
 
   /**
@@ -549,7 +606,6 @@ export class IMGatewayManager extends EventEmitter {
       return this.testNimOpenClawConnectivity(configOverride);
     }
 
-    // WeCom always uses OpenClaw mode
     if (platform === 'wecom') {
       return this.testWecomOpenClawConnectivity(configOverride);
     }
@@ -1618,6 +1674,38 @@ export class IMGatewayManager extends EventEmitter {
     };
   }
 
+  private getPlatformTargetUrl(platform: IMPlatform, config: IMGatewayConfig): string {
+    if (platform === 'dingtalk') return 'https://api.dingtalk.com';
+    if (platform === 'feishu') {
+      const domain = (config.feishu.domain || 'feishu').toLowerCase();
+      return domain.includes('lark')
+        ? 'https://open.larksuite.com'
+        : 'https://open.feishu.cn';
+    }
+    if (platform === 'telegram') return 'https://api.telegram.org';
+    if (platform === 'discord') return 'https://discord.com';
+    if (platform === 'nim') return 'https://netease.im';
+    if (platform === 'xiaomifeng') return 'https://api.mifengs.com';
+    if (platform === 'qq') return 'https://bots.qq.com';
+    return 'https://aibot.weixin.qq.com';
+  }
+
+  private getPlatformProxyConfig(platform: IMPlatform, config: IMGatewayConfig): ProxyConfig | undefined {
+    return (config[platform] as IMPlatformProxyConfig | undefined)?.proxy;
+  }
+
+  private async runWithPlatformProxy<T>(
+    platform: IMPlatform,
+    config: IMGatewayConfig,
+    callback: () => Promise<T>
+  ): Promise<T> {
+    return withTemporaryProxyEnv(
+      this.getPlatformProxyConfig(platform, config),
+      this.getPlatformTargetUrl(platform, config),
+      callback
+    );
+  }
+
   private getMissingCredentials(platform: IMPlatform, config: IMGatewayConfig): string[] {
     if (platform === 'dingtalk') {
       const fields: string[] = [];
@@ -1675,9 +1763,11 @@ export class IMGatewayManager extends EventEmitter {
   }
 
   private async runAuthProbe(platform: IMPlatform, config: IMGatewayConfig): Promise<string> {
+    const platformProxy = this.getPlatformProxyConfig(platform, config);
+
     if (platform === 'dingtalk') {
       const tokenUrl = `https://oapi.dingtalk.com/gettoken?appkey=${encodeURIComponent(config.dingtalk.clientId)}&appsecret=${encodeURIComponent(config.dingtalk.clientSecret)}`;
-      const resp = await fetchJsonWithTimeout<{ errcode?: number; errmsg?: string }>(tokenUrl, {}, CONNECTIVITY_TIMEOUT_MS);
+      const resp = await fetchJsonWithTimeout<{ errcode?: number; errmsg?: string }>(tokenUrl, {}, CONNECTIVITY_TIMEOUT_MS, platformProxy);
       if (resp.errcode && resp.errcode !== 0) {
         throw new Error(resp.errmsg || `errcode ${resp.errcode}`);
       }
@@ -1685,17 +1775,19 @@ export class IMGatewayManager extends EventEmitter {
     }
 
     if (platform === 'feishu') {
-      const Lark = await import('@larksuiteoapi/node-sdk');
-      const domain = this.resolveFeishuDomain(config.feishu.domain, Lark);
-      const client = new Lark.Client({
-        appId: config.feishu.appId,
-        appSecret: config.feishu.appSecret,
-        appType: Lark.AppType.SelfBuild,
-        domain,
-      });
-      const response: any = await client.request({
-        method: 'GET',
-        url: '/open-apis/bot/v3/info',
+      const response: any = await this.runWithPlatformProxy(platform, config, async () => {
+        const Lark = await import('@larksuiteoapi/node-sdk');
+        const domain = this.resolveFeishuDomain(config.feishu.domain, Lark);
+        const client = new Lark.Client({
+          appId: config.feishu.appId,
+          appSecret: config.feishu.appSecret,
+          appType: Lark.AppType.SelfBuild,
+          domain,
+        });
+        return client.request({
+          method: 'GET',
+          url: '/open-apis/bot/v3/info',
+        });
       });
       if (response.code !== 0) {
         throw new Error(response.msg || `code ${response.code}`);
@@ -1759,7 +1851,8 @@ export class IMGatewayManager extends EventEmitter {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ appId, clientSecret: appSecret }),
         },
-        CONNECTIVITY_TIMEOUT_MS
+        CONNECTIVITY_TIMEOUT_MS,
+        platformProxy
       );
       if (!tokenResponse.access_token) {
         throw new Error(tokenResponse.message || '获取 AccessToken 失败');
@@ -1822,7 +1915,7 @@ export class IMGatewayManager extends EventEmitter {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ appKey: clientId, appSecret: clientSecret }),
-    }, 10_000);
+    }, 10_000, this.imStore.getDingTalkOpenClawConfig().proxy);
 
     if (!resp.accessToken) {
       throw new Error('DingTalk accessToken response missing token');
@@ -1872,7 +1965,7 @@ export class IMGatewayManager extends EventEmitter {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
-    }, 10_000);
+    }, 10_000, dtConfig.proxy);
 
     if (resp.processQueryKey) {
       console.log(`[IMGatewayManager] DingTalk direct send success: processQueryKey=${resp.processQueryKey}`);

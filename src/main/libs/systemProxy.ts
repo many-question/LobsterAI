@@ -74,6 +74,12 @@ export function restoreOriginalProxyEnv(): void {
   });
 }
 
+export function clearProxyEnv(): void {
+  PROXY_ENV_KEYS.forEach((key) => {
+    setEnvValue(key, undefined);
+  });
+}
+
 export function applySystemProxyEnv(proxyUrl: string | null): void {
   // Always start from original env so toggling is reversible and predictable.
   restoreOriginalProxyEnv();

@@ -15,7 +15,7 @@ import {
 } from './libs/agentEngine';
 import { SkillManager } from './skillManager';
 import type { PermissionResult } from '@anthropic-ai/claude-agent-sdk';
-import { getCurrentApiConfig, resolveCurrentApiConfig, setStoreGetter, setAuthTokensGetter, setServerBaseUrlGetter, updateServerModelMetadata, clearServerModelMetadata } from './libs/claudeSettings';
+import { getCurrentApiConfig, resolveCurrentApiConfig, resolveRawApiConfig, setCurrentModelSelection, setStoreGetter, setAuthTokensGetter, setServerBaseUrlGetter, updateServerModelMetadata, clearServerModelMetadata, type AvailableModelDescriptor } from './libs/claudeSettings';
 import { saveCoworkApiConfig } from './libs/coworkConfigStore';
 import { generateSessionTitle, probeCoworkModelReadiness } from './libs/coworkUtil';
 import { executeCoworkSlashCommand } from './libs/coworkSlashCommands';
@@ -60,6 +60,7 @@ import { McpStore } from './mcpStore';
 import { CronJobService } from '../scheduled-task/cronJobService';
 import { migrateScheduledTasksToOpenclaw, migrateScheduledTaskRunsToOpenclaw } from '../scheduled-task/migrate';
 import type { ProxyConfig } from '../shared/proxy';
+import { normalizeProxyConfig } from '../shared/proxy';
 import { buildScheduledTaskEnginePrompt } from '../scheduled-task/enginePrompt';
 import { IpcChannel as ScheduledTaskIpc, DeliveryMode as STDeliveryMode, SessionTarget as STSessionTarget, PayloadKind as STPayloadKind } from '../scheduled-task/constants';
 import { McpServerManager } from './libs/mcpServerManager';
@@ -958,13 +959,17 @@ const syncOpenClawConfig = async (
   const prevSecretEnvVars = getOpenClawEngineManager().getSecretEnvVars();
   const secretEnvVarsChanged = JSON.stringify(nextSecretEnvVars) !== JSON.stringify(prevSecretEnvVars);
   getOpenClawEngineManager().setSecretEnvVars(nextSecretEnvVars);
+  const nextProviderProxy = normalizeProxyConfig(resolveRawApiConfig().proxy);
+  const prevProviderProxy = normalizeProxyConfig(getOpenClawEngineManager().getProviderProxyConfig());
+  const providerProxyChanged = JSON.stringify(nextProviderProxy) !== JSON.stringify(prevProviderProxy);
+  getOpenClawEngineManager().setProviderProxyConfig(nextProviderProxy);
 
   // When secret env vars change, the running gateway must be restarted even if
   // the caller didn't request it — the ${VAR} placeholders in openclaw.json
   // resolve from the process environment which is fixed at spawn time.
-  const needsRestart = syncResult.changed || secretEnvVarsChanged;
+  const needsRestart = syncResult.changed || secretEnvVarsChanged || providerProxyChanged;
 
-  if (!needsRestart || (!options.restartGatewayIfRunning && !secretEnvVarsChanged)) {
+  if (!needsRestart || (!options.restartGatewayIfRunning && !secretEnvVarsChanged && !providerProxyChanged)) {
     return {
       success: true,
       changed: syncResult.changed,
@@ -1003,6 +1008,44 @@ const syncOpenClawConfig = async (
     success: true,
     changed: true,
     status: restarted,
+  };
+};
+
+const applySharedModelSelection = async (input: {
+  modelId: string;
+  providerKey?: string;
+}): Promise<{
+  success: boolean;
+  selected?: AvailableModelDescriptor;
+  error?: string;
+  engineStatus?: OpenClawEngineStatus;
+}> => {
+  const selectionResult = setCurrentModelSelection(input);
+  if (!selectionResult.selected) {
+    return {
+      success: false,
+      error: selectionResult.error || 'Failed to switch model.',
+    };
+  }
+
+  refreshEndpointsTestMode(getStore());
+
+  const syncResult = await syncOpenClawConfig({
+    reason: 'model-selection-change',
+    restartGatewayIfRunning: true,
+  });
+  if (!syncResult.success) {
+    return {
+      success: false,
+      error: syncResult.error || syncResult.status?.message || 'Failed to reload OpenClaw after switching model.',
+      engineStatus: syncResult.status,
+    };
+  }
+
+  return {
+    success: true,
+    selected: selectionResult.selected,
+    engineStatus: syncResult.status,
   };
 };
 
@@ -1375,6 +1418,13 @@ const getIMGatewayManager = () => {
             scheduleAt: task.schedule.kind === 'at' ? task.schedule.at : request.scheduleAt,
           };
         },
+        setModelSelection: async (input) => {
+          const result = await applySharedModelSelection(input);
+          return {
+            selected: result.success ? (result.selected ?? null) : null,
+            error: result.success ? undefined : result.error,
+          };
+        },
       }
     );
 
@@ -1712,7 +1762,7 @@ if (!gotTheLock) {
       refreshEndpointsTestMode(getStore());
       const syncResult = await syncOpenClawConfig({
         reason: 'app-config-change',
-        restartGatewayIfRunning: false,
+        restartGatewayIfRunning: true,
       });
       if (!syncResult.success) {
         console.error('[OpenClaw] Failed to sync config after app_config update:', syncResult.error);
@@ -2596,12 +2646,39 @@ if (!gotTheLock) {
           session: currentSession,
           runtime: getCoworkEngineRouter(),
         }),
+        setModelSelection: async (input) => {
+          const result = await applySharedModelSelection(input);
+          return {
+            selected: result.success ? (result.selected ?? null) : null,
+            error: result.success ? undefined : result.error,
+          };
+        },
       });
       return { success: true, result };
     } catch (error) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to execute slash command',
+      };
+    }
+  });
+
+  ipcMain.handle('cowork:model:setSelection', async (_event, options: {
+    modelId: string;
+    providerKey?: string;
+  }) => {
+    try {
+      const result = await applySharedModelSelection(options);
+      return {
+        success: result.success,
+        selected: result.selected,
+        error: result.error,
+        engineStatus: result.engineStatus,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to switch model',
       };
     }
   });

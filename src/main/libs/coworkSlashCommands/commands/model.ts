@@ -1,7 +1,6 @@
 import {
   getCurrentModelSelection,
   listAvailableConfiguredModels,
-  setCurrentModelSelection,
 } from '../../claudeSettings';
 import type { AvailableModelDescriptor } from '../../claudeSettings';
 import type { CoworkSlashCommandContext, CoworkSlashCommandModule } from '../types';
@@ -67,7 +66,7 @@ const modelCommand: CoworkSlashCommandModule = {
     description: 'List available models or switch the active model.',
     usage: '/model [<number>|<rawModelId>]',
   },
-  execute(context: CoworkSlashCommandContext) {
+  async execute(context: CoworkSlashCommandContext) {
     const { positionals, options } = context.invocation.parsed;
     const requestedValue = positionals[0]?.trim();
     const providerKey = typeof options.provider === 'string'
@@ -97,7 +96,7 @@ const modelCommand: CoworkSlashCommandModule = {
       resolvedProviderKey = entry.model.providerKey;
     }
 
-    const { selected, error } = setCurrentModelSelection({
+    const { selected, error } = await context.setModelSelection({
       modelId,
       providerKey: resolvedProviderKey,
     });

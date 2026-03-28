@@ -10,6 +10,7 @@ import type {
   CoworkSlashCommandDescriptor,
   CoworkSlashCommandExecutionResult,
   CoworkSlashCommandInvocation,
+  CoworkSlashCommandModelSelectionHandler,
   CoworkSlashCommandModule,
   CoworkSlashParsedArgs,
   CoworkSlashParsedOption,
@@ -195,6 +196,7 @@ export async function executeCoworkSlashCommand(input: string, options: {
   isStreaming?: boolean;
   configStore?: CoworkSlashCommandConfigStore | null;
   getStatusSnapshot?: () => Promise<import('../coworkStatus').CoworkSlashCommandStatusSnapshot>;
+  setModelSelection?: CoworkSlashCommandModelSelectionHandler;
 } = {}): Promise<CoworkSlashCommandExecutionResult> {
   const invocation = parseSlashCommandInvocation(input);
   if (!invocation) {
@@ -243,6 +245,12 @@ export async function executeCoworkSlashCommand(input: string, options: {
         return options.getStatusSnapshot();
       }
       throw new Error('Status snapshot provider is unavailable.');
+    },
+    setModelSelection: async (input) => {
+      if (options.setModelSelection) {
+        return options.setModelSelection(input);
+      }
+      throw new Error('Model selection provider is unavailable.');
     },
   };
 

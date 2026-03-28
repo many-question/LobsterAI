@@ -1,3 +1,4 @@
+import type { AvailableModelDescriptor } from '../claudeSettings';
 import type { CoworkConfig, CoworkConfigUpdate, CoworkSession, CoworkSessionSummary } from '../../coworkStore';
 import type { CoworkSlashCommandStatusSnapshot } from '../coworkStatus';
 
@@ -52,6 +53,10 @@ export interface CoworkSlashCommandContext {
   getCurrentSession: () => CoworkSession | null;
   listSessions: () => CoworkSessionSummary[];
   getStatusSnapshot: () => Promise<CoworkSlashCommandStatusSnapshot>;
+  setModelSelection: (input: {
+    modelId: string;
+    providerKey?: string;
+  }) => Promise<{ selected: AvailableModelDescriptor | null; error?: string }>;
 }
 
 export interface CoworkSlashCommandConfigStore {
@@ -60,6 +65,11 @@ export interface CoworkSlashCommandConfigStore {
   getSession: (sessionId: string) => CoworkSession | null;
   listSessions: () => CoworkSessionSummary[];
 }
+
+export type CoworkSlashCommandModelSelectionHandler = (input: {
+  modelId: string;
+  providerKey?: string;
+}) => Promise<{ selected: AvailableModelDescriptor | null; error?: string }>;
 
 export interface CoworkSlashCommandModule {
   command: CoworkSlashCommandDescriptor;

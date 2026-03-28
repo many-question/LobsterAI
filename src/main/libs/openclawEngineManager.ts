@@ -9,6 +9,7 @@ import { getElectronNodeRuntimePath, ensureElectronNodeShim, getSkillsRoot } fro
 import { syncLocalOpenClawExtensionsIntoRuntime } from './openclawLocalExtensions';
 import { appendPythonRuntimeToEnv } from './pythonRuntime';
 import { isSystemProxyEnabled, resolveSystemProxyUrl } from './systemProxy';
+import { normalizeProxyConfig, type ProxyConfig } from '../../shared/proxy';
 
 type GatewayProcess = UtilityProcess | ChildProcess;
 
@@ -191,6 +192,7 @@ export class OpenClawEngineManager extends EventEmitter {
   private gatewayPort: number | null = null;
   private startGatewayPromise: Promise<OpenClawEngineStatus> | null = null;
   private secretEnvVars: Record<string, string> = {};
+  private providerProxyConfig: ProxyConfig = normalizeProxyConfig(undefined);
 
   constructor() {
     super();
@@ -238,6 +240,14 @@ export class OpenClawEngineManager extends EventEmitter {
   /** Return the current secret env vars snapshot (for change detection). */
   getSecretEnvVars(): Record<string, string> {
     return this.secretEnvVars;
+  }
+
+  setProviderProxyConfig(config: ProxyConfig | null | undefined): void {
+    this.providerProxyConfig = normalizeProxyConfig(config);
+  }
+
+  getProviderProxyConfig(): ProxyConfig {
+    return { ...this.providerProxyConfig };
   }
 
   override on<U extends keyof OpenClawEngineManagerEvents>(
@@ -496,7 +506,22 @@ export class OpenClawEngineManager extends EventEmitter {
       env.LOBSTERAI_NPM_BIN_DIR = npmBinDir || '';
     }
 
-    if (isSystemProxyEnabled()) {
+    const providerProxyConfig = normalizeProxyConfig(this.providerProxyConfig);
+    const providerProxyUrl = providerProxyConfig.mode === 'custom'
+      ? providerProxyConfig.url?.trim() || ''
+      : '';
+
+    if (providerProxyConfig.mode === 'custom' && providerProxyUrl) {
+      env.http_proxy = providerProxyUrl;
+      env.https_proxy = providerProxyUrl;
+      env.HTTP_PROXY = providerProxyUrl;
+      env.HTTPS_PROXY = providerProxyUrl;
+      const noProxyValue = mergeNoProxyHosts(inheritedNoProxy);
+      env.no_proxy = noProxyValue;
+      env.NO_PROXY = noProxyValue;
+      console.log('[OpenClaw] Injected provider proxy for gateway:', providerProxyUrl);
+      console.log('[OpenClaw] Injected gateway no_proxy:', noProxyValue);
+    } else if (providerProxyConfig.mode === 'inherit' && isSystemProxyEnabled()) {
       const proxyUrl = await resolveSystemProxyUrl('https://openrouter.ai');
       if (proxyUrl) {
         env.http_proxy = proxyUrl;

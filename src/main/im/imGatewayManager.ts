@@ -9,6 +9,7 @@ import * as path from 'path';
 import { t } from '../i18n';
 import { executeCoworkSlashCommand } from '../libs/coworkSlashCommands';
 import { getCoworkSlashCommandStatusSnapshot } from '../libs/coworkStatus';
+import type { CoworkSlashCommandModelSelectionHandler } from '../libs/coworkSlashCommands/types';
 import { NimGateway } from './nimGateway';
 import { XiaomifengGateway } from './xiaomifengGateway';
 import { IMChatHandler } from './imChatHandler';
@@ -87,6 +88,7 @@ export interface IMGatewayManagerOptions {
     message: IMMessage;
     request: ParsedIMScheduledTaskRequest;
   }) => Promise<IMScheduledTaskCreationResult>;
+  setModelSelection?: CoworkSlashCommandModelSelectionHandler;
 }
 
 export class IMGatewayManager extends EventEmitter {
@@ -111,6 +113,7 @@ export class IMGatewayManager extends EventEmitter {
         request: ParsedIMScheduledTaskRequest;
       }) => Promise<IMScheduledTaskCreationResult>)
     | null = null;
+  private setModelSelection: CoworkSlashCommandModelSelectionHandler | null = null;
 
   // Cowork dependencies
   private coworkRuntime: CoworkRuntime | null = null;
@@ -141,6 +144,7 @@ export class IMGatewayManager extends EventEmitter {
     this.ensureOpenClawGatewayReady = options?.ensureOpenClawGatewayReady ?? null;
     this.getOpenClawSessionKeysForCoworkSession = options?.getOpenClawSessionKeysForCoworkSession ?? null;
     this.createScheduledTask = options?.createScheduledTask ?? null;
+    this.setModelSelection = options?.setModelSelection ?? null;
 
     // Forward gateway events
     this.setupGatewayEventForwarding();
@@ -306,6 +310,15 @@ export class IMGatewayManager extends EventEmitter {
         session: currentSessionId ? this.coworkStore.getSession(currentSessionId) : null,
         runtime: this.coworkRuntime,
       }),
+      setModelSelection: async (input) => {
+        if (!this.setModelSelection) {
+          return {
+            selected: null,
+            error: 'Model selection is unavailable.',
+          };
+        }
+        return this.setModelSelection(input);
+      },
     });
 
     if (!result.handled) {

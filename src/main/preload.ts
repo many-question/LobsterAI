@@ -174,6 +174,8 @@ contextBridge.exposeInMainWorld('electron', {
       ipcRenderer.invoke('cowork:session:continue', options),
     executeCommand: (options: { input: string; currentSessionId?: string | null; isStreaming?: boolean }) =>
       ipcRenderer.invoke('cowork:command:execute', options),
+    setModelSelection: (options: { modelId: string; providerKey?: string }) =>
+      ipcRenderer.invoke('cowork:model:setSelection', options),
     stopSession: (sessionId: string) =>
       ipcRenderer.invoke('cowork:session:stop', sessionId),
     deleteSession: (sessionId: string) =>

@@ -73,7 +73,7 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
 
   const ensureSelectedModelSynced = async () => {
     if (!selectedModel?.id) {
-      return;
+      return true;
     }
 
     const latestConfig = configService.getConfig();
@@ -81,16 +81,20 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
       latestConfig.model.defaultModel === selectedModel.id
       && (latestConfig.model.defaultModelProvider ?? '') === (selectedModel.providerKey ?? '')
     ) {
-      return;
+      return true;
     }
 
-    await configService.updateConfig({
-      model: {
-        ...latestConfig.model,
-        defaultModel: selectedModel.id,
-        defaultModelProvider: selectedModel.providerKey,
-      },
+    const result = await coworkService.setModelSelection({
+      modelId: selectedModel.id,
+      providerKey: selectedModel.providerKey,
     });
+    if (!result.success) {
+      window.dispatchEvent(new CustomEvent('app:showToast', {
+        detail: result.error || 'Failed to switch model',
+      }));
+      return false;
+    }
+    return true;
   };
 
   const buildApiConfigNotice = (error?: string) => {
@@ -447,7 +451,9 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
         .filter(p => p?.trim())
         .join('\n\n') || undefined;
 
-      await ensureSelectedModelSynced();
+      if (!await ensureSelectedModelSynced()) {
+        return false;
+      }
 
       // Start the actual session immediately with fallback title
       const { session: startedSession, error: startError } = await coworkService.startSession({
@@ -540,7 +546,9 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
       .filter(p => p?.trim())
       .join('\n\n') || undefined;
 
-    await ensureSelectedModelSynced();
+    if (!await ensureSelectedModelSynced()) {
+      return false;
+    }
 
     await coworkService.continueSession({
       sessionId: currentSession.id,

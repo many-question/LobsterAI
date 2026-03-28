@@ -5,6 +5,7 @@ import { ChevronDownIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { setSelectedModel, isSameModelIdentity, getModelIdentityKey } from '../store/slices/modelSlice';
 import type { Model } from '../store/slices/modelSlice';
 import { i18nService } from '../services/i18n';
+import { coworkService } from '../services/cowork';
 
 interface ModelSelectorProps {
   dropdownDirection?: 'up' | 'down';
@@ -13,6 +14,7 @@ interface ModelSelectorProps {
 const ModelSelector: React.FC<ModelSelectorProps> = ({ dropdownDirection = 'down' }) => {
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = React.useState(false);
+  const [isSwitchingModel, setIsSwitchingModel] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
   const selectedModel = useSelector((state: RootState) => state.model.selectedModel);
   const availableModels = useSelector((state: RootState) => state.model.availableModels);
@@ -34,9 +36,46 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ dropdownDirection = 'down
     };
   }, [isOpen]);
 
-  const handleModelSelect = (model: Model) => {
-    dispatch(setSelectedModel(model));
-    setIsOpen(false);
+  const handleModelSelect = async (model: Model) => {
+    if (isSwitchingModel) {
+      return;
+    }
+    if (isSameModelIdentity(model, selectedModel)) {
+      setIsOpen(false);
+      return;
+    }
+
+    setIsSwitchingModel(true);
+    try {
+      const result = await coworkService.setModelSelection({
+        modelId: model.id,
+        providerKey: model.providerKey,
+      });
+      if (!result.success || !result.selected) {
+        window.dispatchEvent(new CustomEvent('app:showToast', {
+          detail: result.error || 'Failed to switch model',
+        }));
+        return;
+      }
+
+      const nextModel = availableModels.find((item) => (
+        item.id === result.selected?.id
+        && (item.providerKey ?? '') === (result.selected?.providerKey ?? '')
+      )) ?? {
+        id: result.selected.id,
+        name: result.selected.name,
+        providerKey: result.selected.providerKey,
+        provider: result.selected.providerKey
+          ? result.selected.providerKey.charAt(0).toUpperCase() + result.selected.providerKey.slice(1)
+          : undefined,
+        supportsImage: result.selected.supportsImage ?? false,
+      };
+
+      dispatch(setSelectedModel(nextModel));
+      setIsOpen(false);
+    } finally {
+      setIsSwitchingModel(false);
+    }
   };
 
   // 如果没有可用模型，显示提示
@@ -57,13 +96,14 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ dropdownDirection = 'down
   const hasBothGroups = serverModels.length > 0 && userModels.length > 0;
 
   const renderModelItem = (model: Model) => (
-    <button
-      key={getModelIdentityKey(model)}
-      onClick={() => handleModelSelect(model)}
-      className={`w-full px-4 py-2.5 text-left dark:text-claude-darkText text-claude-text dark:hover:bg-claude-darkSurfaceHover hover:bg-claude-surfaceHover flex items-center justify-between transition-colors ${
-        isSameModelIdentity(model, selectedModel) ? 'dark:bg-claude-darkSurfaceHover/50 bg-claude-surfaceHover/50' : ''
-      }`}
-    >
+      <button
+        key={getModelIdentityKey(model)}
+        onClick={() => handleModelSelect(model)}
+        disabled={isSwitchingModel}
+        className={`w-full px-4 py-2.5 text-left dark:text-claude-darkText text-claude-text dark:hover:bg-claude-darkSurfaceHover hover:bg-claude-surfaceHover flex items-center justify-between transition-colors ${
+          isSameModelIdentity(model, selectedModel) ? 'dark:bg-claude-darkSurfaceHover/50 bg-claude-surfaceHover/50' : ''
+        } ${isSwitchingModel ? 'opacity-60 cursor-wait' : ''}`}
+      >
       <div className="flex flex-col">
         <div className="flex items-center gap-1.5">
           <span className="text-sm">{model.name}</span>

@@ -22,6 +22,7 @@ import type {
   CoworkSession,
   CoworkConfigUpdate,
   CoworkApiConfig,
+  CoworkModelSelectionResult,
   CoworkUserMemoryEntry,
   CoworkMemoryStats,
   CoworkPermissionResult,
@@ -31,6 +32,7 @@ import type {
   CoworkSlashCommandResult,
 } from '../types/cowork';
 import { i18nService } from './i18n';
+import { configService } from './config';
 import { classifyErrorKey } from '../../common/coworkErrorClassify';
 
 const classifyError = (error: string): string => {
@@ -338,6 +340,28 @@ class CoworkService {
     }
 
     return result.result;
+  }
+
+  async setModelSelection(options: {
+    modelId: string;
+    providerKey?: string;
+  }): Promise<CoworkModelSelectionResult> {
+    const cowork = window.electron?.cowork;
+    if (!cowork?.setModelSelection) {
+      return {
+        success: false,
+        error: 'Cowork model selection API not available',
+      };
+    }
+
+    const result = await cowork.setModelSelection(options);
+    if (result.engineStatus) {
+      this.notifyOpenClawStatus(result.engineStatus);
+    }
+    if (result.success) {
+      await configService.init();
+    }
+    return result;
   }
 
   async stopSession(sessionId: string): Promise<boolean> {

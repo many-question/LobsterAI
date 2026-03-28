@@ -201,6 +201,20 @@ export interface CoworkSlashCommandResult {
   commands?: CoworkSlashCommandDescriptor[];
 }
 
+export interface CoworkModelSelectionDescriptor {
+  id: string;
+  name: string;
+  providerKey?: string;
+  supportsImage?: boolean;
+}
+
+export interface CoworkModelSelectionResult {
+  success: boolean;
+  selected?: CoworkModelSelectionDescriptor;
+  error?: string;
+  engineStatus?: OpenClawEngineStatus;
+}
+
 // IPC result types
 export interface CoworkSessionResult {
   success: boolean;

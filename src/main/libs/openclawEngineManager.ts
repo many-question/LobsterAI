@@ -56,6 +56,39 @@ const sleep = async (ms: number): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, ms));
 };
 
+const PROXY_ENV_KEYS = [
+  'http_proxy',
+  'https_proxy',
+  'all_proxy',
+  'HTTP_PROXY',
+  'HTTPS_PROXY',
+  'ALL_PROXY',
+  'no_proxy',
+  'NO_PROXY',
+] as const;
+
+const LOOPBACK_NO_PROXY_HOSTS = ['127.0.0.1', 'localhost', '::1'];
+
+const clearProxyEnvVars = (env: NodeJS.ProcessEnv): void => {
+  for (const key of PROXY_ENV_KEYS) {
+    delete env[key];
+  }
+};
+
+const mergeNoProxyHosts = (existingValue: string | undefined): string => {
+  const values = new Set<string>();
+  for (const entry of (existingValue || '').split(',')) {
+    const trimmed = entry.trim();
+    if (trimmed) {
+      values.add(trimmed);
+    }
+  }
+  for (const host of LOOPBACK_NO_PROXY_HOSTS) {
+    values.add(host);
+  }
+  return Array.from(values).join(',');
+};
+
 const parseJsonFile = <T>(filePath: string): T | null => {
   try {
     const raw = fs.readFileSync(filePath, 'utf8');
@@ -387,6 +420,9 @@ export class OpenClawEngineManager extends EventEmitter {
     });
 
     const compileCacheDir = path.join(this.stateDir, '.compile-cache');
+    const rawStreamLogDir = path.join(this.stateDir, 'logs');
+    ensureDir(rawStreamLogDir);
+    const rawStreamLogPath = path.join(rawStreamLogDir, 'raw-openai-completions.jsonl');
     console.log(`[OpenClaw] compile cache dir: ${compileCacheDir}`);
     const electronNodeRuntimePath = getElectronNodeRuntimePath();
     const cliShimDir = this.ensureBundledCliShims();
@@ -406,6 +442,13 @@ export class OpenClawEngineManager extends EventEmitter {
       OPENCLAW_BUNDLED_PLUGINS_DIR: path.join(runtime.root, 'extensions'),
       // Enable debug-level logging so gateway emits phase-level detail during startup.
       OPENCLAW_LOG_LEVEL: 'debug',
+      // Capture raw OpenAI-compatible streaming chunks for local provider debugging.
+      // Current OpenClaw runtime reads OPENCLAW_RAW_STREAM*. Keep PI_* as compatibility
+      // aliases because older runtime builds documented that naming.
+      OPENCLAW_RAW_STREAM: '1',
+      OPENCLAW_RAW_STREAM_PATH: rawStreamLogPath,
+      PI_RAW_STREAM: '1',
+      PI_RAW_STREAM_PATH: rawStreamLogPath,
       // Enable V8 compile cache for both CJS and ESM modules.
       // This env var works for import() (ESM), unlike enableCompileCache() which is CJS-only.
       NODE_COMPILE_CACHE: compileCacheDir,
@@ -415,6 +458,9 @@ export class OpenClawEngineManager extends EventEmitter {
       // This keeps plaintext credentials out of the config file on disk.
       ...this.secretEnvVars,
     };
+
+    const inheritedNoProxy = env.no_proxy || env.NO_PROXY;
+    clearProxyEnvVars(env);
 
     // Ensure the gateway process uses the host's local timezone for logging.
     // macOS does not set TZ in the environment by default (it uses NSTimeZone/ICU),
@@ -457,7 +503,11 @@ export class OpenClawEngineManager extends EventEmitter {
         env.https_proxy = proxyUrl;
         env.HTTP_PROXY = proxyUrl;
         env.HTTPS_PROXY = proxyUrl;
+        const noProxyValue = mergeNoProxyHosts(inheritedNoProxy);
+        env.no_proxy = noProxyValue;
+        env.NO_PROXY = noProxyValue;
         console.log('[OpenClaw] Injected system proxy for gateway:', proxyUrl);
+        console.log('[OpenClaw] Injected gateway no_proxy:', noProxyValue);
       }
     }
 

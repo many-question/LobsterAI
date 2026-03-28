@@ -241,8 +241,8 @@ type OpenClawProviderSelection = {
   providerConfig: {
     baseUrl: string;
     api: OpenClawProviderApi;
-    apiKey: string;
-    auth: 'api-key';
+    apiKey?: string;
+    auth?: 'api-key';
     models: Array<{
       id: string;
       name: string;
@@ -365,6 +365,9 @@ const buildProviderSelection = (options: {
     if (providerName === 'gemini') {
       return 'google-generative-ai';
     }
+    if (providerName === 'lmstudio') {
+      return 'openai-completions';
+    }
     return options.apiType === 'openai' ? 'openai-completions' : 'anthropic-messages';
   })();
   const providerId = (() => {
@@ -374,6 +377,9 @@ const buildProviderSelection = (options: {
     if (providerName === 'gemini') {
       return 'google';
     }
+    if (providerName === 'lmstudio') {
+      return 'lmstudio';
+    }
     return 'lobster';
   })();
   const normalizedBaseUrl = (() => {
@@ -382,6 +388,9 @@ const buildProviderSelection = (options: {
     }
     if (providerName === 'gemini') {
       return normalizeGeminiBaseUrl(options.baseURL);
+    }
+    if (providerName === 'lmstudio') {
+      return normalizeOpenAIResponsesBaseUrl(options.baseURL);
     }
     return stripChatCompletionsSuffix(options.baseURL);
   })();
@@ -489,8 +498,15 @@ const buildProviderSelection = (options: {
     providerConfig: {
       baseUrl: normalizedBaseUrl,
       api: providerApi,
-      apiKey: `\${${providerApiKeyEnvVar(providerName)}}`,
-      auth: 'api-key',
+      ...(providerName === 'lmstudio'
+        ? {
+            apiKey: 'lmstudio',
+            auth: 'api-key' as const,
+          }
+        : {
+            apiKey: `\${${providerApiKeyEnvVar(providerName)}}`,
+            auth: 'api-key' as const,
+          }),
       models: [
         {
           id: options.modelId,
